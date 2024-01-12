@@ -1,0 +1,39 @@
+[build-system]
+requires = [
+    "setuptools",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aioartifactory"
+authors = [
+    {name = "Yan Kuang"},
+]
+description = "Asynchronous Input Output (AIO) Artifactory"
+requires-python = ">=3.7"
+keywords = [ "aioartifactory" ]
+dependencies = [
+    "pylint",
+    "pytest"
+]
+dynamic = [
+    "version",
+    "readme"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/YTKme/Python-AIOArtifactory"
+"Bug Tracker" = "https://github.com/YTKme/Python-AIOArtifactory/issues"
+
+[tool.distutils.bdist_wheel]
+universal = true
+
+[tool.setuptools]
+packages = [
+    "aioartifactory"
+]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
+readme = {file = ["README.md"]}
