@@ -1,6 +1,7 @@
 [build-system]
 requires = [
     "setuptools",
+    "setuptools-scm",
     "wheel"
 ]
 build-backend = "setuptools.build_meta"
@@ -11,15 +12,29 @@ authors = [
     {name = "Yan Kuang"},
 ]
 description = "Asynchronous Input Output (AIO) Artifactory"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 keywords = [ "aioartifactory" ]
 dependencies = [
-    "pylint",
-    "pytest"
+    "aiohttp",
+    "httpx"
 ]
 dynamic = [
     "version",
     "readme"
+]
+
+[project.optional-dependencies]
+develop = [
+    "build",
+    "coverage",
+    "pylint",
+    "pytest",
+    "twine"
+]
+test = [
+    "coverage",
+    "pylint",
+    "pytest",
 ]
 
 [project.urls]
