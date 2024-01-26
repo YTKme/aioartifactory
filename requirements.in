@@ -1,4 +1,9 @@
+aiofiles
+aiohttp[speedups]
 build
 pylint
 pytest
+pytest-asyncio
+rich
+sphinx
 twine
