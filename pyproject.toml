@@ -15,8 +15,10 @@ description = "Asynchronous Input Output (AIO) Artifactory"
 requires-python = ">=3.9"
 keywords = [ "aioartifactory" ]
 dependencies = [
-    "aiohttp",
-    "httpx"
+    "aiofiles",
+    "aiohttp[speedups]",
+    "httpx",
+    "rich",
 ]
 dynamic = [
     "version",
@@ -29,17 +31,21 @@ develop = [
     "coverage",
     "pylint",
     "pytest",
-    "twine"
+    "pytest-asyncio",
+    "twine",
 ]
 test = [
     "coverage",
     "pylint",
     "pytest",
+    "pytest-asyncio",
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/YTKme/Python-AIOArtifactory"
 "Bug Tracker" = "https://github.com/YTKme/Python-AIOArtifactory/issues"
+
+[tool.autopep8]
 
 [tool.distutils.bdist_wheel]
 universal = true
