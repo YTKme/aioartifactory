@@ -3,9 +3,17 @@ Asynchronous Input Output (AIO) Artifactory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
 
+from pathlib import Path
+from types import TracebackType
+from typing import (
+    Optional,
+    Type,
+)
+
 import aiofiles
 import aiohttp
-from pathlib import Path
+
+from aioartifactory.context import TeardownContextManager
 
 
 class AIOArtifactory:
@@ -40,19 +48,30 @@ class AIOArtifactory:
         self,
         source: str,
         destination: str,
+        quiet: bool = False,
     ):
         """Retrieve
+
+
         """
         transferred_size = 0
         destination_path = Path(destination).parent.resolve()
 
         session_connector = aiohttp.TCPConnector(limit=10)
         session_timeout = aiohttp.ClientTimeout(total=None, sock_connect=10000, sock_read=10000)
-        async with aiohttp.ClientSession(connector=session_connector, timeout=session_timeout) as session:
-            async with session.get(source, headers=self._header) as response:
-                async with aiofiles.open(file=destination, mode='wb') as file:
-                    async for chunk, _ in response.content.iter_chunks():
-                        await file.write(chunk)
+        async with (
+            aiohttp.ClientSession(connector=session_connector, timeout=session_timeout) as session,
+            session.get(source, headers=self._header) as response,
+            aiofiles.open(file=destination, mode='wb') as file,
+        ):
+            with TeardownContextManager() as teardown:
+                def cleanup():
+                    ...
+
+                teardown.append(cleanup)
+
+                async for chunk, _ in response.content.iter_chunks():
+                    await file.write(chunk)
 
         print('Done')
 
@@ -62,7 +81,19 @@ class AIOArtifactory:
         """
         return self
 
-    async def __aexit__(self, *args) -> None:
+    async def __aexit__(
+        self,
+        exception_type: Optional[Type[BaseException]],
+        exception_value: Optional[BaseException],
+        exception_traceback: Optional[TracebackType],
+    ) -> None:
         """Asynchronous Exit
+
+        :param exception_type: The exception type
+        :type exception_type: Optional[Type[BaseException]]
+        :param exception_value: The exception value
+        :type exception_value: Optional[BaseException]
+        :param exception_traceback: The exception traceback
+        :type exception_traceback: Optional[TracebackType]
         """
-        await self.close()
+        await super()
