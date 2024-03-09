@@ -17,7 +17,7 @@ keywords = [ "aioartifactory" ]
 dependencies = [
     "aiofiles",
     "aiohttp[speedups]",
-    "httpx",
+    "tealogger==0.8.0",
     "rich",
 ]
 dynamic = [

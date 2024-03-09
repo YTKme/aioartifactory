@@ -6,4 +6,5 @@ pytest
 pytest-asyncio
 rich
 sphinx
+tealogger==0.8.0
 twine
