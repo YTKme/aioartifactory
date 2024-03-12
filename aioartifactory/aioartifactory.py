@@ -266,18 +266,25 @@ class AIOArtifactory:
         while True:
             query = await query_queue.get()
 
-            # The signal to exit
+            # The signal to exit (check at the beginning)
             if query is None:
                 break
 
-            tealogger.debug(f'Query: {query}, Type: {type(query)}')
-            tealogger.debug(f'Path: {urlparse(query).path}')
+            # tealogger.debug(f'Query: {query}, Type: {type(query)}')
+            # tealogger.debug(f'Path: {urlparse(query).path}')
 
             remote_path = RemotePath(path=query, api_key=self._api_key)
             async for file in remote_path.get_file_list():
                 # Store the result
-                tealogger.info(f'File: {query.rstrip("/")}{file}')
+                # tealogger.debug(f'File: {query.rstrip("/")}{file}')
                 await download_queue.put(f'{query.rstrip("/")}{file}')
+
+    async def _download_query(
+        self,
+    ):
+        """Download Query
+        """
+        ...
 
     async def __aenter__(self):
         """Asynchronous Enter
