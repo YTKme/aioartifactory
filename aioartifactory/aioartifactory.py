@@ -34,9 +34,7 @@ class RemotePath(PurePath):
         *args,
         **kwargs
     ):
-        """New
-        """
-        tealogger.debug(f'Remote Path Create Constructor')
+        """Create Constructor"""
         return super().__new__(cls, *args, **kwargs)
 
     def __init__(
@@ -45,13 +43,12 @@ class RemotePath(PurePath):
         *args,
         **kwargs
     ):
-        """Constructor
+        """Customize Constructor
 
         :param path: The URL of the Remote
             Path
         :type path: str
         """
-        tealogger.debug(f'Remote Path Initialize Constructor')
         super().__init__(*args)
 
         # Authentication
@@ -62,11 +59,20 @@ class RemotePath(PurePath):
             self._token = kwargs.get('token')
             self._header = {'Authorization': f'Bearer {self._token}'}
 
+        self._path = path
+
         # TODO: Validate URL
 
         # Parse the URL path
         self._parse_url = urlparse(path)
-        tealogger.debug(f'Parse Result: {self._parse_url}')
+
+    def __str__(self):
+        """Informal or Nicely Printable String Representation"""
+        return f'{self._path}'
+
+    def __repr__(self):
+        """Official String Representation"""
+        return f'{self.__class__.__name__}({self._path!r})'
 
     def _get_storage_api_path(
         self
@@ -141,12 +147,12 @@ class AIOArtifactory:
     # __slots__ = ()
 
     def __new__(cls, *args, **kwargs):
-        """New
+        """Create Constructor
         """
         return super().__new__(cls)
 
     def __init__(self, *args, **kwargs):
-        """Constructor
+        """Customize Constructor
 
         The main Artifactory class
 
@@ -223,29 +229,49 @@ class AIOArtifactory:
         quiet: bool,
     ):
         """Retrieve Recursive"""
-        # Create a `query_queue` to store the `source_list` to retrieve
-        query_queue = Queue()
+        # Create a `source_queue` to store the `source_list` to retrieve
+        source_queue = Queue()
+        # Create a `destination_queue` to store the `destination_list` to retrieve
+        destination_queue = Queue()
 
         async with TaskGroup() as group:
             # Create `maximum_connection` of `_retrieve_query` worker task(s)
             # Store them in a `task_list`
-            task_list = [
+            source_task_list = [
                 group.create_task(
                     self._retrieve_query(
-                        query_queue=query_queue,
+                        source_queue=source_queue,
                         download_queue=download_queue,
-                        session=session,
+                        # session=session,
                     )
-                ) for index in range(maximum_connection)
+                ) for _ in range(maximum_connection)
             ]
 
-            # Enqueue the `source` to the `query_queue`
+            # Enqueue the `source` to the `source_queue`
             for source in source_list:
-                await query_queue.put(source)
+                await source_queue.put(source)
+
+            # Enqueue the `destination` to the `destination_queue`
+            for destination in destination_list:
+                await destination_queue.put(destination)
 
             # Enqueue a `None` signal for worker(s) to exit
             for _ in range(maximum_connection):
-                await query_queue.put(None)
+                await source_queue.put(None)
+
+        async with TaskGroup() as group:
+            download_task_list = [
+                group.create_task(
+                    self._download_query(
+                        download_queue=download_queue,
+                        session=session,
+                    )
+                ) for _ in range(maximum_connection)
+            ]
+
+            # Enqueue a `None` signal for worker(s) to exit
+            for _ in range(maximum_connection):
+                await download_queue.put(None)
 
     async def _retrieve_nonrecursive(
         self,
@@ -257,34 +283,57 @@ class AIOArtifactory:
 
     async def _retrieve_query(
         self,
-        query_queue: Queue,
+        source_queue: Queue,
         download_queue: Queue,
-        session: ClientSession,
+        # session: ClientSession,
     ):
         """Retrieve Query
         """
         while True:
-            query = await query_queue.get()
+            source = await source_queue.get()
 
             # The signal to exit (check at the beginning)
-            if query is None:
+            if source is None:
                 break
 
-            # tealogger.debug(f'Query: {query}, Type: {type(query)}')
-            # tealogger.debug(f'Path: {urlparse(query).path}')
+            tealogger.debug(f'Source: {source}, Type: {type(source)}')
+            tealogger.debug(f'Path: {urlparse(source).path}')
 
-            remote_path = RemotePath(path=query, api_key=self._api_key)
+            remote_path = RemotePath(path=source, api_key=self._api_key)
             async for file in remote_path.get_file_list():
                 # Store the result
-                # tealogger.debug(f'File: {query.rstrip("/")}{file}')
-                await download_queue.put(f'{query.rstrip("/")}{file}')
+                tealogger.debug(f'File: {source.rstrip("/")}{file}')
+                await download_queue.put(
+                    RemotePath(
+                        path=f'{source.rstrip("/")}{file}',
+                        api_key=self._api_key
+                    )
+                )
 
     async def _download_query(
         self,
+        download_queue: Queue,
+        session: ClientSession,
     ):
         """Download Query
         """
-        ...
+        while True:
+            download = await download_queue.get()
+
+            # The signal to exit (check at the beginning)
+            if download is None:
+                break
+
+            tealogger.debug(f'Download: {download}, Type: {type(download)}')
+
+            # Download the file
+            tealogger.info(f'Downloading: {download}')
+            # async with (
+            #     session.get(url=download, headers=self._header) as response,
+            #     aiofiles.open('.', 'wb') as file,
+            # ):
+            #     async for chuck, _ in response.content.iter_chunks():
+            #         await file.write(chuck)
 
     async def __aenter__(self):
         """Asynchronous Enter
