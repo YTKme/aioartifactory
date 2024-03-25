@@ -3,12 +3,12 @@ Asynchronous Input Output (AIO) Artifactory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
 
-from asyncio import (Queue, TaskGroup)
+from asyncio import (BoundedSemaphore, Queue, TaskGroup)
 from os import PathLike
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from types import TracebackType
 from typing import (AsyncGenerator, Optional, Type)
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import aiofiles
 from aiohttp import (ClientSession, ClientTimeout, TCPConnector)
@@ -18,8 +18,8 @@ from aioartifactory.configuration import (
     DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
     DEFAULT_MAX_CONNECTION,
 )
-from aioartifactory.common import progress
-from aioartifactory.context import TeardownContextManager
+# from aioartifactory.common import progress
+# from aioartifactory.context import TeardownContextManager
 
 
 tealogger.set_level(tealogger.DEBUG)
@@ -73,6 +73,40 @@ class RemotePath(PurePath):
     def __repr__(self):
         """Official String Representation"""
         return f'{self.__class__.__name__}({self._path!r})'
+
+    @property
+    def name(self):
+        """Name"""
+        return PurePath(self._parse_url.path).name
+
+    @property
+    def location(self):
+        """Location"""
+        return '/'.join(PurePath(self._parse_url.path).parts[2:])
+
+
+    @property
+    async def sha256(self) -> str:
+        """SHA256
+
+        Get the SHA-256 checksum of the Remote Path if available, else
+        return None.
+
+        :return: The SHA-256 checksum of the Remote Path
+        :rtype: str, None
+        """
+        storage_api_url = self._get_storage_api_url()
+        tealogger.debug(f'Storage API URL: {storage_api_url}')
+
+        async with ClientSession() as session:
+            async with session.get(
+                url=storage_api_url,
+                headers=self._header,
+            ) as response:
+                data = await response.json()
+
+        return data['checksums']['sha256']
+
 
     def _get_storage_api_path(
         self
@@ -169,15 +203,11 @@ class AIOArtifactory:
             self._token = kwargs.get('token')
             self._header = {'Authorization': f'Bearer {self._token}'}
 
-    # async def print_me(self, message: str):
-    #     await asyncio.sleep(1)
-    #     print(message)
-
     async def retrieve(
         self,
         source_list: list[str],
         destination_list: list[PathLike],
-        maximum_queue_size: int = DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
+        # maximum_queue_size: int = DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
         maximum_connection: int = DEFAULT_MAX_CONNECTION,
         quiet: bool = False,
         recursive: bool = False,
@@ -212,7 +242,7 @@ class AIOArtifactory:
                     source_list=source_list,
                     destination_list=destination_list,
                     download_queue=download_queue,
-                    maximum_queue_size=maximum_queue_size,
+                    # maximum_queue_size=maximum_queue_size,
                     maximum_connection=maximum_connection,
                     session=session,
                     quiet=quiet,
@@ -223,7 +253,7 @@ class AIOArtifactory:
         source_list: list[str],
         destination_list: list[PathLike],
         download_queue: Queue,
-        maximum_queue_size: int,
+        # maximum_queue_size: int,
         maximum_connection: int,
         session: ClientSession,
         quiet: bool,
@@ -318,7 +348,7 @@ class AIOArtifactory:
         """Download Query
         """
         while True:
-            download = await download_queue.get()
+            download: RemotePath = await download_queue.get()
 
             # The signal to exit (check at the beginning)
             if download is None:
@@ -327,13 +357,23 @@ class AIOArtifactory:
             tealogger.debug(f'Download: {download}, Type: {type(download)}')
 
             # Download the file
-            tealogger.info(f'Downloading: {download}')
-            # async with (
-            #     session.get(url=download, headers=self._header) as response,
-            #     aiofiles.open('.', 'wb') as file,
-            # ):
-            #     async for chuck, _ in response.content.iter_chunks():
-            #         await file.write(chuck)
+            tealogger.debug(f'Downloading: {download}')
+            # tealogger.info(f'Name: {download.name}')
+            # tealogger.info(f'Path: {download.location}')
+
+            try:
+                Path(unquote(download.location)).parent.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                tealogger.error(f'Error: {e}')
+
+            async with (
+                session.get(url=str(download), headers=self._header) as response,
+                aiofiles.open(unquote(download.location), 'wb') as file,
+            ):
+                async for chuck, _ in response.content.iter_chunks():
+                    await file.write(chuck)
+
+            tealogger.info(f'Completed: {download}')
 
     async def __aenter__(self):
         """Asynchronous Enter
