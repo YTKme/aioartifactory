@@ -1,0 +1,12 @@
+{
+    "TestRemotePath": {
+        "test_construct": {
+            "path": [
+                "https://artifactory.acme.com/artifactory/repository/path/subpath/"
+            ]
+        }
+    },
+    "TestAIOArtifactory": {
+
+    }
+}
