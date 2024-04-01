@@ -16,7 +16,7 @@ import tealogger
 
 from aioartifactory.configuration import (
     DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
-    DEFAULT_MAX_CONNECTION,
+    DEFAULT_MAXIMUM_CONNECTION,
 )
 # from aioartifactory.common import progress
 # from aioartifactory.context import TeardownContextManager
@@ -84,7 +84,6 @@ class RemotePath(PurePath):
         """Location"""
         return '/'.join(PurePath(self._parse_url.path).parts[2:])
 
-
     @property
     async def sha256(self) -> str:
         """SHA256
@@ -96,7 +95,7 @@ class RemotePath(PurePath):
         :rtype: str, None
         """
         storage_api_url = self._get_storage_api_url()
-        tealogger.debug(f'Storage API URL: {storage_api_url}')
+        # tealogger.debug(f'Storage API URL: {storage_api_url}')
 
         async with ClientSession() as session:
             async with session.get(
@@ -106,7 +105,6 @@ class RemotePath(PurePath):
                 data = await response.json()
 
         return data['checksums']['sha256']
-
 
     def _get_storage_api_path(
         self
@@ -162,7 +160,7 @@ class RemotePath(PurePath):
         """
 
         storage_api_url = self._get_storage_api_url()
-        tealogger.debug(f'Storage API URL: {storage_api_url}')
+        # tealogger.debug(f'Storage API URL: {storage_api_url}')
 
         async with ClientSession() as session:
             async with session.get(
@@ -203,12 +201,14 @@ class AIOArtifactory:
             self._token = kwargs.get('token')
             self._header = {'Authorization': f'Bearer {self._token}'}
 
+        # bounded_limiter = BoundedSemaphore(DEFAULT_MAXIMUM_CONNECTION)
+
     async def retrieve(
         self,
         source_list: list[str],
         destination_list: list[PathLike],
         # maximum_queue_size: int = DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
-        maximum_connection: int = DEFAULT_MAX_CONNECTION,
+        maximum_connection: int = DEFAULT_MAXIMUM_CONNECTION,
         quiet: bool = False,
         recursive: bool = False,
     ):
@@ -229,10 +229,11 @@ class AIOArtifactory:
         :param recursive: Whether to recursively retrieve artifact(s)
         :type recursive: bool, optional
         """
+
         # Create a `download_queue`
         download_queue = Queue()
 
-        session_connector = TCPConnector(limit=maximum_connection)
+        session_connector = TCPConnector(limit_per_host=maximum_connection)
         async with (
             ClientSession(connector=session_connector) as session,
         ):
@@ -242,7 +243,6 @@ class AIOArtifactory:
                     source_list=source_list,
                     destination_list=destination_list,
                     download_queue=download_queue,
-                    # maximum_queue_size=maximum_queue_size,
                     maximum_connection=maximum_connection,
                     session=session,
                     quiet=quiet,
@@ -253,7 +253,6 @@ class AIOArtifactory:
         source_list: list[str],
         destination_list: list[PathLike],
         download_queue: Queue,
-        # maximum_queue_size: int,
         maximum_connection: int,
         session: ClientSession,
         quiet: bool,
