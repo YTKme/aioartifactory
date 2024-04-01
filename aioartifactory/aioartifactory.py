@@ -229,8 +229,12 @@ class AIOArtifactory:
         download_queue = Queue()
 
         session_connector = TCPConnector(limit_per_host=maximum_connection)
+        session_timeout = ClientTimeout(total=5 * 60)
         async with (
-            ClientSession(connector=session_connector) as session,
+            ClientSession(
+                connector=session_connector,
+                timeout=session_timeout,
+            ) as session,
         ):
             # Retrieve Recursive
             if recursive:
@@ -331,9 +335,9 @@ class AIOArtifactory:
             tealogger.debug(f'Source: {source}, Type: {type(source)}')
             tealogger.debug(f'Path: {urlparse(source).path}')
 
+            # Enqueue the retrieve query response
             remote_path = RemotePath(path=source, api_key=self._api_key)
             async for file in remote_path.get_file_list():
-                # Store the result
                 tealogger.debug(f'File: {source.rstrip("/")}{file}')
                 await download_queue.put(
                     f'{source.rstrip("/")}{file}'
@@ -355,15 +359,15 @@ class AIOArtifactory:
 
             tealogger.debug(f'Download: {download}, Type: {type(download)}')
 
-            # Download the file
-            tealogger.debug(f'Downloading: {download}')
-
             remote_path = RemotePath(path=download, api_key=self._api_key)
 
             try:
                 Path(unquote(remote_path.location)).parent.mkdir(parents=True, exist_ok=True)
             except OSError as e:
                 tealogger.error(f'Operating System Error: {e}')
+
+            # Download the file
+            tealogger.debug(f'Downloading: {download}')
 
             async with (
                 session.get(url=str(remote_path), headers=self._header) as response,
