@@ -2,6 +2,37 @@
 
 Python Asynchronous Input Output (AIO) Artifactory
 
+## Glossary
+
+### Local Path
+
+The Local Path is represented by a file system path pointing to a
+location on the local file system.
+
+#### Example
+
+```text
+# Unix
+/home/user/path/subpath/
+```
+
+```text
+# Windows
+C:\Users\user\path\subpath\
+```
+
+### Remote Path
+
+The Remote Path is represented by a URL (Uniform Resource Locator)
+pointing to a location on the Internet. It should be the URL for
+Artifactory.
+
+#### Example
+
+```text
+https://artifactory.acme.com/artifactory/repository/path/subpath/
+```
+
 ## Reference
 
 ### Artifactory
