@@ -3,7 +3,7 @@ Test Asynchronous Input Output (AIO) Artifactory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
 
-import json
+import os
 from pathlib import (PurePath, Path)
 from urllib.parse import urlparse
 
@@ -14,6 +14,7 @@ from aioartifactory import (AIOArtifactory, RemotePath)
 
 
 tealogger.set_level(tealogger.DEBUG)
+ARTIFACTORY_API_KEY = os.environ.get('ARTIFACTORY_API_KEY')
 
 
 class TestRemotePath:
@@ -25,7 +26,7 @@ class TestRemotePath:
 
         remote_path = RemotePath(
             path=path,
-            api_key=API_KEY,
+            api_key=ARTIFACTORY_API_KEY,
         )
 
         tealogger.debug(f'Remote Path __str__: {str(remote_path)}')
@@ -51,7 +52,7 @@ class TestRemotePath:
     async def test_sha256(self, path: str):
         """Test SHA256"""
 
-        remote_path = RemotePath(path=path, api_key=API_KEY)
+        remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
 
         checksum_sha256 = await remote_path.sha256
 
@@ -118,7 +119,7 @@ class TestAIOArtifactory:
         """Test Retrieve"""
 
         aioartifactory = AIOArtifactory(
-            api_key=API_KEY
+            api_key=ARTIFACTORY_API_KEY
         )
 
         await aioartifactory.retrieve(
