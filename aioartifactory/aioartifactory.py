@@ -259,7 +259,10 @@ class AIOArtifactory:
         destination_queue = Queue()
 
         async with TaskGroup() as group:
-            # Create `maximum_connection` of `_retrieve_query` worker task(s)
+            # Optimize maximum connection
+            connection_count = min(len(source_list), maximum_connection)
+
+            # Create `connection_count` of `_retrieve_query` worker task(s)
             # Store them in a `task_list`
             _ = [
                 group.create_task(
@@ -268,7 +271,7 @@ class AIOArtifactory:
                         download_queue=download_queue,
                         # session=session,
                     )
-                ) for _ in range(maximum_connection)
+                ) for _ in range(connection_count)
             ]
 
             # Enqueue the `source` to the `source_queue`
@@ -280,21 +283,26 @@ class AIOArtifactory:
                 await destination_queue.put(destination)
 
             # Enqueue a `None` signal for worker(s) to exit
-            for _ in range(maximum_connection):
+            for _ in range(connection_count):
                 await source_queue.put(None)
 
         async with TaskGroup() as group:
+            # Optimize maximum connection
+            connection_count = min(download_queue.qsize(), maximum_connection)
+
+            # Create `connection_count` of `_download_query` worker task(s)
+            # Store them in a `task_list`
             _ = [
                 group.create_task(
                     self._download_query(
                         download_queue=download_queue,
                         session=session,
                     )
-                ) for _ in range(maximum_connection)
+                ) for _ in range(connection_count)
             ]
 
             # Enqueue a `None` signal for worker(s) to exit
-            for _ in range(maximum_connection):
+            for _ in range(connection_count):
                 await download_queue.put(None)
 
     # async def _retrieve_nonrecursive(
