@@ -207,7 +207,6 @@ class AIOArtifactory:
         self,
         source_list: list[str],
         destination_list: list[PathLike],
-        # maximum_queue_size: int = DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
         maximum_connection: int = DEFAULT_MAXIMUM_CONNECTION,
         quiet: bool = False,
         recursive: bool = False,
@@ -218,9 +217,6 @@ class AIOArtifactory:
         :type source: str
         :param destination: The destination (Local) path
         :type destination: str
-        :param maximum_queue_size: The maximum queue size use to
-            retrieve artifact(s)
-        :type maximum_queue_size: int, optional
         :param maximum_connection: The maximum parallel connection use
             to retrieve artifact(s)
         :type maximum_connection: int, optional
