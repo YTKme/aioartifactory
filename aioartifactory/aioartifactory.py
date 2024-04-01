@@ -15,7 +15,6 @@ from aiohttp import (ClientSession, ClientTimeout, TCPConnector)
 import tealogger
 
 from aioartifactory.configuration import (
-    DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
     DEFAULT_MAXIMUM_CONNECTION,
 )
 # from aioartifactory.common import progress
@@ -262,7 +261,7 @@ class AIOArtifactory:
         async with TaskGroup() as group:
             # Create `maximum_connection` of `_retrieve_query` worker task(s)
             # Store them in a `task_list`
-            source_task_list = [
+            _ = [
                 group.create_task(
                     self._retrieve_query(
                         source_queue=source_queue,
@@ -285,7 +284,7 @@ class AIOArtifactory:
                 await source_queue.put(None)
 
         async with TaskGroup() as group:
-            download_task_list = [
+            _ = [
                 group.create_task(
                     self._download_query(
                         download_queue=download_queue,
@@ -298,13 +297,13 @@ class AIOArtifactory:
             for _ in range(maximum_connection):
                 await download_queue.put(None)
 
-    async def _retrieve_nonrecursive(
-        self,
-        source_list: list[str],
-        destination_list: list[PathLike],
-    ):
-        """Retrieve Non-Recursive"""
-        ...
+    # async def _retrieve_nonrecursive(
+    #     self,
+    #     source_list: list[str],
+    #     destination_list: list[PathLike],
+    # ):
+    #     """Retrieve Non-Recursive"""
+    #     ...
 
     async def _retrieve_query(
         self,
@@ -329,10 +328,7 @@ class AIOArtifactory:
                 # Store the result
                 tealogger.debug(f'File: {source.rstrip("/")}{file}')
                 await download_queue.put(
-                    RemotePath(
-                        path=f'{source.rstrip("/")}{file}',
-                        api_key=self._api_key
-                    )
+                    f'{source.rstrip("/")}{file}'
                 )
 
     async def _download_query(
@@ -343,7 +339,7 @@ class AIOArtifactory:
         """Download Query
         """
         while True:
-            download: RemotePath = await download_queue.get()
+            download = await download_queue.get()
 
             # The signal to exit (check at the beginning)
             if download is None:
@@ -353,17 +349,17 @@ class AIOArtifactory:
 
             # Download the file
             tealogger.debug(f'Downloading: {download}')
-            # tealogger.info(f'Name: {download.name}')
-            # tealogger.info(f'Path: {download.location}')
+
+            remote_path = RemotePath(path=download, api_key=self._api_key)
 
             try:
-                Path(unquote(download.location)).parent.mkdir(parents=True, exist_ok=True)
-            except Exception as e:
-                tealogger.error(f'Error: {e}')
+                Path(unquote(remote_path.location)).parent.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                tealogger.error(f'Operating System Error: {e}')
 
             async with (
-                session.get(url=str(download), headers=self._header) as response,
-                aiofiles.open(unquote(download.location), 'wb') as file,
+                session.get(url=str(remote_path), headers=self._header) as response,
+                aiofiles.open(unquote(remote_path.location), 'wb') as file,
             ):
                 async for chuck, _ in response.content.iter_chunks():
                     await file.write(chuck)
