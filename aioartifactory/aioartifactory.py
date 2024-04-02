@@ -12,6 +12,7 @@ from urllib.parse import unquote, urlparse
 
 import aiofiles
 from aiohttp import (ClientSession, ClientTimeout, TCPConnector)
+from rich.progress import Progress
 import tealogger
 
 from aioartifactory.configuration import (
@@ -373,8 +374,8 @@ class AIOArtifactory:
                 session.get(url=str(remote_path), headers=self._header) as response,
                 aiofiles.open(unquote(remote_path.location), 'wb') as file,
             ):
-                async for chuck, _ in response.content.iter_chunks():
-                    await file.write(chuck)
+                async for chunk, _ in response.content.iter_chunks():
+                    await file.write(chunk)
 
             tealogger.info(f'Completed: {download}')
 
