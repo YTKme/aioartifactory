@@ -4,6 +4,7 @@ Test Asynchronous Input Output (AIO) Artifactory
 """
 
 import os
+from os import PathLike
 from pathlib import (PurePath, Path)
 from urllib.parse import urlparse
 
@@ -41,12 +42,12 @@ class TestRemotePath:
 
         tealogger.debug(f'Remote Path Name: {remote_path.name}')
 
-    def test_path(self, path: str):
-        """Test Path"""
+    def test_location(self, path: str):
+        """Test Location"""
 
         remote_path = RemotePath(path=path)
 
-        tealogger.debug(f'Remote Path Path: {remote_path.location}')
+        tealogger.debug(f'Remote Path Location: {remote_path.location}')
 
     @pytest.mark.asyncio
     async def test_sha256(self, path: str):
@@ -115,15 +116,41 @@ class TestAIOArtifactory:
     """
 
     @pytest.mark.asyncio
-    async def test_retrieve(self, source_list: list[str]):
-        """Test Retrieve"""
+    async def test_retrieve_one(
+        self,
+        source: str,
+        destination: PathLike,
+    ):
+        """Test Retrieve One"""
 
-        aioartifactory = AIOArtifactory(
-            api_key=ARTIFACTORY_API_KEY
-        )
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
         await aioartifactory.retrieve(
-            source_list=source_list,
-            destination_list=[Path(__file__).parent.resolve()],
+            source=source,
+            destination=destination,
             recursive=True,
         )
+
+    @pytest.mark.asyncio
+    async def test_retrieve_many(
+        self,
+        source: list[str],
+        destination: list[PathLike],
+    ):
+        """Test Retrieve Many"""
+
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+
+        await aioartifactory.retrieve(
+            source=source,
+            destination=[Path(__file__).parent.resolve()],
+            recursive=True,
+        )
+
+    async def test_retrieve_destination(
+        self,
+        source_list: list[str],
+        destination_list: list[PathLike]
+    ):
+        """Test Retrieve Destination"""
+        ...

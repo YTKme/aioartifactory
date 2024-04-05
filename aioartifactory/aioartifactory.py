@@ -75,14 +75,16 @@ class RemotePath(PurePath):
         return f'{self.__class__.__name__}({self._path!r})'
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Name"""
-        return PurePath(self._parse_url.path).name
+        return unquote(PurePath(self._parse_url.path).name)
 
     @property
-    def location(self):
+    def location(self) -> PurePath:
         """Location"""
-        return '/'.join(PurePath(self._parse_url.path).parts[2:])
+        return PurePath(unquote(
+            '/'.join(PurePath(self._parse_url.path).parts[2:])
+        ))
 
     @property
     async def sha256(self) -> str:
@@ -205,8 +207,8 @@ class AIOArtifactory:
 
     async def retrieve(
         self,
-        source_list: str | list[str],
-        destination_list: PathLike | list[PathLike],
+        source: str | list[str],
+        destination: PathLike | list[PathLike],
         maximum_connection: int = DEFAULT_MAXIMUM_CONNECTION,
         quiet: bool = False,
         recursive: bool = False,
@@ -229,6 +231,12 @@ class AIOArtifactory:
         # Create a `download_queue`
         download_queue = Queue()
 
+        # TODO: Convert one to many...for now
+        if isinstance(source, str):
+            source = [source]
+        if isinstance(destination, str):
+            destination = [destination]
+
         session_connector = TCPConnector(limit_per_host=maximum_connection)
         session_timeout = ClientTimeout(total=5 * 60)
         async with (
@@ -240,8 +248,8 @@ class AIOArtifactory:
             # Retrieve Recursive
             if recursive:
                 await self._retrieve_recursive(
-                    source_list=source_list,
-                    destination_list=destination_list,
+                    source_list=source,
+                    destination_list=destination,
                     download_queue=download_queue,
                     maximum_connection=maximum_connection,
                     session=session,
@@ -250,8 +258,8 @@ class AIOArtifactory:
 
     async def _retrieve_recursive(
         self,
-        source_list: str | list[str],
-        destination_list: PathLike | list[PathLike],
+        source_list: list[str],
+        destination_list: list[PathLike],
         download_queue: Queue,
         maximum_connection: int,
         session: ClientSession,
@@ -271,7 +279,7 @@ class AIOArtifactory:
             # Store them in a `task_list`
             _ = [
                 group.create_task(
-                    self._retrieve_query(
+                    self._retrieve_task(
                         source_queue=source_queue,
                         download_queue=download_queue,
                         # session=session,
@@ -284,8 +292,8 @@ class AIOArtifactory:
                 await source_queue.put(source)
 
             # Enqueue the `destination` to the `destination_queue`
-            for destination in destination_list:
-                await destination_queue.put(destination)
+            # for destination in destination_list:
+            #     await destination_queue.put(destination)
 
             # Enqueue a `None` signal for worker(s) to exit
             for _ in range(connection_count):
@@ -299,7 +307,8 @@ class AIOArtifactory:
             # Store them in a `task_list`
             _ = [
                 group.create_task(
-                    self._download_query(
+                    self._download_task(
+                        destination_list=destination_list,
                         download_queue=download_queue,
                         session=session,
                     )
@@ -318,13 +327,18 @@ class AIOArtifactory:
     #     """Retrieve Non-Recursive"""
     #     ...
 
-    async def _retrieve_query(
+    async def _retrieve_task(
         self,
         source_queue: Queue,
         download_queue: Queue,
         # session: ClientSession,
     ):
-        """Retrieve Query
+        """Retrieve Task
+
+        :param source_queue: The source queue
+        :type source_queue: Queue
+        :param download_queue: The download queue
+        :type download_queue: Queue
         """
         while True:
             source = await source_queue.get()
@@ -344,12 +358,18 @@ class AIOArtifactory:
                     f'{source.rstrip("/")}{file}'
                 )
 
-    async def _download_query(
+    async def _download_task(
         self,
+        destination_list: list[PathLike],
         download_queue: Queue,
         session: ClientSession,
     ):
-        """Download Query
+        """Download Task
+
+        :param download_queue: The download queue
+        :type download_queue: Queue
+        :param session: The current session
+        :type session: ClientSession
         """
         while True:
             download = await download_queue.get()
@@ -362,20 +382,22 @@ class AIOArtifactory:
 
             remote_path = RemotePath(path=download, api_key=self._api_key)
 
-            try:
-                Path(unquote(remote_path.location)).parent.mkdir(parents=True, exist_ok=True)
-            except OSError as e:
-                tealogger.error(f'Operating System Error: {e}')
-
             # Download the file
             tealogger.debug(f'Downloading: {download}')
 
-            async with (
-                session.get(url=str(remote_path), headers=self._header) as response,
-                aiofiles.open(unquote(remote_path.location), 'wb') as file,
-            ):
-                async for chunk, _ in response.content.iter_chunks():
-                    await file.write(chunk)
+            async with session.get(url=str(remote_path), headers=self._header) as response:
+                for destination in destination_list:
+                    destination_path = Path(
+                        destination / remote_path.location
+                    ).expanduser().resolve()
+                    try:
+                        destination_path.parent.mkdir(parents=True, exist_ok=True)
+                    except OSError as e:
+                        tealogger.error(f'Operating System Error: {e}')
+
+                    async with aiofiles.open(destination_path, 'wb') as file:
+                        async for chunk, _ in response.content.iter_chunks():
+                            await file.write(chunk)
 
             tealogger.info(f'Completed: {download}')
 
