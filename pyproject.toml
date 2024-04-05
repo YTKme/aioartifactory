@@ -12,7 +12,7 @@ authors = [
     {name = "Yan Kuang"},
 ]
 description = "Asynchronous Input Output (AIO) Artifactory"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 keywords = [ "aioartifactory" ]
 dependencies = [
     "aiofiles",
