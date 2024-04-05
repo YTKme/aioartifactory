@@ -205,8 +205,8 @@ class AIOArtifactory:
 
     async def retrieve(
         self,
-        source_list: list[str],
-        destination_list: list[PathLike],
+        source_list: str | list[str],
+        destination_list: PathLike | list[PathLike],
         maximum_connection: int = DEFAULT_MAXIMUM_CONNECTION,
         quiet: bool = False,
         recursive: bool = False,
@@ -250,8 +250,8 @@ class AIOArtifactory:
 
     async def _retrieve_recursive(
         self,
-        source_list: list[str],
-        destination_list: list[PathLike],
+        source_list: str | list[str],
+        destination_list: PathLike | list[PathLike],
         download_queue: Queue,
         maximum_connection: int,
         session: ClientSession,
