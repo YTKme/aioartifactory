@@ -18,7 +18,7 @@ import tealogger
 from aioartifactory.configuration import (
     DEFAULT_MAXIMUM_CONNECTION,
 )
-# from aioartifactory.common import progress
+from aioartifactory.common import progress
 # from aioartifactory.context import TeardownContextManager
 
 
@@ -278,19 +278,21 @@ class AIOArtifactory:
                 ) for source in source_list
             ]
 
-        async with TaskGroup() as group:
-            # Create `connection_count` of `_download_query` worker task(s)
-            # Store them in a `task_list`
-            _ = [
-                group.create_task(
-                    self._download_task(
-                        download=download,
-                        destination_list=destination_list,
-                        bounded_limiter=bounded_limiter,
-                        session=session,
-                    )
-                ) for download in download_list
-            ]
+        with progress as download_progress:
+            async with TaskGroup() as group:
+                # Create `connection_count` of `_download_query` worker task(s)
+                # Store them in a `task_list`
+                _ = [
+                    group.create_task(
+                        self._download_task(
+                            download=download,
+                            destination_list=destination_list,
+                            bounded_limiter=bounded_limiter,
+                            session=session,
+                            progress=download_progress,
+                        )
+                    ) for download in download_list
+                ]
 
     # async def _retrieve_nonrecursive(
     #     self,
@@ -333,6 +335,7 @@ class AIOArtifactory:
         destination_list: list[PathLike],
         bounded_limiter: BoundedSemaphore,
         session: ClientSession,
+        progress: Progress,
     ):
         """Download Task
 
@@ -361,8 +364,13 @@ class AIOArtifactory:
                         tealogger.error(f'Operating System Error: {e}')
 
                     async with aiofiles.open(destination_path, 'wb') as file:
+                        task = progress.add_task(
+                            f'Downloading: {remote_path.name}',
+                            total=response.content_length,
+                        )
                         async for chunk, _ in response.content.iter_chunks():
                             await file.write(chunk)
+                            progress.update(task, advance=len(chunk))
 
             tealogger.info(f'Completed: {download}')
 
