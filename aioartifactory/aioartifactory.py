@@ -3,15 +3,15 @@ Asynchronous Input Output (AIO) Artifactory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
 
-from asyncio import (BoundedSemaphore, Queue, TaskGroup)
+from asyncio import BoundedSemaphore, Queue, TaskGroup, sleep
 from os import PathLike
 from pathlib import Path, PurePath
 from types import TracebackType
-from typing import (AsyncGenerator, Optional, Type)
+from typing import AsyncGenerator, Optional, Type
 from urllib.parse import unquote, urlparse
 
 import aiofiles
-from aiohttp import (ClientSession, ClientTimeout, TCPConnector)
+from aiohttp import ClientSession, ClientTimeout, TCPConnector
 from rich.progress import Progress
 import tealogger
 
@@ -228,8 +228,7 @@ class AIOArtifactory:
         :type recursive: bool, optional
         """
 
-        # Create a `download_queue`
-        download_queue = Queue()
+        bounded_limiter = BoundedSemaphore(3)
 
         # TODO: Convert one to many...for now
         if isinstance(source, str):
@@ -237,12 +236,10 @@ class AIOArtifactory:
         if isinstance(destination, str):
             destination = [destination]
 
-        session_connector = TCPConnector(limit_per_host=maximum_connection)
-        session_timeout = ClientTimeout(total=5 * 60)
         async with (
             ClientSession(
-                connector=session_connector,
-                timeout=session_timeout,
+                connector=TCPConnector(limit_per_host=maximum_connection),
+                timeout=ClientTimeout(total=5 * 60),
             ) as session,
         ):
             # Retrieve Recursive
@@ -250,8 +247,7 @@ class AIOArtifactory:
                 await self._retrieve_recursive(
                     source_list=source,
                     destination_list=destination,
-                    download_queue=download_queue,
-                    maximum_connection=maximum_connection,
+                    bounded_limiter=bounded_limiter,
                     session=session,
                     quiet=quiet,
                 )
@@ -260,64 +256,41 @@ class AIOArtifactory:
         self,
         source_list: list[str],
         destination_list: list[PathLike],
-        download_queue: Queue,
-        maximum_connection: int,
         session: ClientSession,
         quiet: bool,
+        bounded_limiter: BoundedSemaphore,
     ):
         """Retrieve Recursive"""
-        # Create a `source_queue` to store the `source_list` to retrieve
-        source_queue = Queue()
-        # Create a `destination_queue` to store the `destination_list` to retrieve
-        destination_queue = Queue()
+        # Create a `download_list` to store the `file` to download
+        download_list = []
 
         async with TaskGroup() as group:
-            # Optimize maximum connection
-            connection_count = min(len(source_list), maximum_connection)
-
             # Create `connection_count` of `_retrieve_query` worker task(s)
             # Store them in a `task_list`
             _ = [
                 group.create_task(
                     self._retrieve_task(
-                        source_queue=source_queue,
-                        download_queue=download_queue,
+                        source=source,
+                        download_list=download_list,
+                        bounded_limiter=bounded_limiter,
                         # session=session,
                     )
-                ) for _ in range(connection_count)
+                ) for source in source_list
             ]
 
-            # Enqueue the `source` to the `source_queue`
-            for source in source_list:
-                await source_queue.put(source)
-
-            # Enqueue the `destination` to the `destination_queue`
-            # for destination in destination_list:
-            #     await destination_queue.put(destination)
-
-            # Enqueue a `None` signal for worker(s) to exit
-            for _ in range(connection_count):
-                await source_queue.put(None)
-
         async with TaskGroup() as group:
-            # Optimize maximum connection
-            connection_count = min(download_queue.qsize(), maximum_connection)
-
             # Create `connection_count` of `_download_query` worker task(s)
             # Store them in a `task_list`
             _ = [
                 group.create_task(
                     self._download_task(
+                        download=download,
                         destination_list=destination_list,
-                        download_queue=download_queue,
+                        bounded_limiter=bounded_limiter,
                         session=session,
                     )
-                ) for _ in range(connection_count)
+                ) for download in download_list
             ]
-
-            # Enqueue a `None` signal for worker(s) to exit
-            for _ in range(connection_count):
-                await download_queue.put(None)
 
     # async def _retrieve_nonrecursive(
     #     self,
@@ -329,8 +302,9 @@ class AIOArtifactory:
 
     async def _retrieve_task(
         self,
-        source_queue: Queue,
-        download_queue: Queue,
+        source: str,
+        download_list: list,
+        bounded_limiter: BoundedSemaphore,
         # session: ClientSession,
     ):
         """Retrieve Task
@@ -340,13 +314,8 @@ class AIOArtifactory:
         :param download_queue: The download queue
         :type download_queue: Queue
         """
-        while True:
-            source = await source_queue.get()
 
-            # The signal to exit (check at the beginning)
-            if source is None:
-                break
-
+        async with bounded_limiter:
             tealogger.debug(f'Source: {source}, Type: {type(source)}')
             tealogger.debug(f'Path: {urlparse(source).path}')
 
@@ -354,14 +323,15 @@ class AIOArtifactory:
             remote_path = RemotePath(path=source, api_key=self._api_key)
             async for file in remote_path.get_file_list():
                 tealogger.debug(f'File: {source.rstrip("/")}{file}')
-                await download_queue.put(
+                download_list.append(
                     f'{source.rstrip("/")}{file}'
                 )
 
     async def _download_task(
         self,
+        download: str,
         destination_list: list[PathLike],
-        download_queue: Queue,
+        bounded_limiter: BoundedSemaphore,
         session: ClientSession,
     ):
         """Download Task
@@ -371,13 +341,8 @@ class AIOArtifactory:
         :param session: The current session
         :type session: ClientSession
         """
-        while True:
-            download = await download_queue.get()
 
-            # The signal to exit (check at the beginning)
-            if download is None:
-                break
-
+        async with bounded_limiter:
             tealogger.debug(f'Download: {download}, Type: {type(download)}')
 
             remote_path = RemotePath(path=download, api_key=self._api_key)
