@@ -12,7 +12,7 @@ from urllib.parse import unquote, urlparse
 
 import aiofiles
 from aiohttp import ClientSession, ClientTimeout, TCPConnector
-from rich.progress import Progress
+from rich.progress import Progress, Task
 import tealogger
 
 from aioartifactory.configuration import (
@@ -282,7 +282,11 @@ class AIOArtifactory:
             async with TaskGroup() as group:
                 # Create `connection_count` of `_download_query` worker task(s)
                 # Store them in a `task_list`
-                _ = [
+                for download in download_list:
+                    task = progress.add_task(
+                        f'{download[-30:]}',
+                        total=None,
+                    )
                     group.create_task(
                         self._download_task(
                             download=download,
@@ -290,9 +294,9 @@ class AIOArtifactory:
                             bounded_limiter=bounded_limiter,
                             session=session,
                             progress=download_progress,
+                            task=task,
                         )
-                    ) for download in download_list
-                ]
+                    )
 
     # async def _retrieve_nonrecursive(
     #     self,
@@ -336,6 +340,7 @@ class AIOArtifactory:
         bounded_limiter: BoundedSemaphore,
         session: ClientSession,
         progress: Progress,
+        task: Task,
     ):
         """Download Task
 
@@ -354,6 +359,8 @@ class AIOArtifactory:
             tealogger.debug(f'Downloading: {download}')
 
             async with session.get(url=str(remote_path), headers=self._header) as response:
+                progress.update(task, total=response.content_length)
+                progress.start_task(task)
                 for destination in destination_list:
                     destination_path = Path(
                         destination / remote_path.location
@@ -364,15 +371,11 @@ class AIOArtifactory:
                         tealogger.error(f'Operating System Error: {e}')
 
                     async with aiofiles.open(destination_path, 'wb') as file:
-                        task = progress.add_task(
-                            f'Downloading: {remote_path.name}',
-                            total=response.content_length,
-                        )
                         async for chunk, _ in response.content.iter_chunks():
                             await file.write(chunk)
-                            progress.update(task, advance=len(chunk))
+                            progress.advance(task, len(chunk))
 
-            tealogger.info(f'Completed: {download}')
+                        # tealogger.info(f'Completed: {download}')
 
     async def __aenter__(self):
         """Asynchronous Enter
