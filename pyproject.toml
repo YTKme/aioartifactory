@@ -42,8 +42,8 @@ test = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/YTKme/Python-AIOArtifactory"
-"Bug Tracker" = "https://github.com/YTKme/Python-AIOArtifactory/issues"
+"Homepage" = "https://github.com/YTKme/aioartifactory"
+"Bug Tracker" = "https://github.com/YTKme/aioartifactory/issues"
 
 [tool.autopep8]
 
