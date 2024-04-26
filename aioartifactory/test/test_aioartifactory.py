@@ -118,16 +118,16 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_retrieve_one(
         self,
-        source: str,
-        destination: PathLike,
+        source_list: str,
+        destination_list: PathLike,
     ):
         """Test Retrieve One"""
 
         aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
         await aioartifactory.retrieve(
-            source=source,
-            destination=destination,
+            source=source_list,
+            destination=destination_list,
             recursive=True,
         )
 
