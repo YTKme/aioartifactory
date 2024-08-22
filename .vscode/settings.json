@@ -2,12 +2,28 @@
     "editor.insertSpaces": true,
     "python.testing.pytestArgs": [
         "-s",
-        "-v"
+        "-vvvv",
+        "-l"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "[python]": {
-        "editor.defaultFormatter": "ms-python.autopep8",
+    "[json]": {
         "editor.tabSize": 4
     },
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "never"
+        },
+        "editor.defaultFormatter": "ms-python.autopep8",
+        "editor.formatOnSave": false,
+        "editor.tabSize": 4
+    },
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "never"
+    },
+    "autopep8.args": [
+        "--experimental",
+        "--ignore=E501",
+        // "--max-line-length", "120",
+    ]
 }
