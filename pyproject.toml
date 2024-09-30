@@ -1,54 +1,69 @@
 [build-system]
 requires = [
-    "setuptools",
-    "setuptools-scm",
+    "setuptools>=61.0",
     "wheel"
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "aioartifactory"
+dynamic = [
+    "version",
+    "readme"
+]
+dependencies = [
+    "aiofiles",
+    "aiohttp[speedups]",
+    "tealogger",
+    "rich",
+]
+requires-python = ">=3.11"
 authors = [
     {name = "Yan Kuang"},
 ]
 description = "Asynchronous Input Output (AIO) Artifactory"
-requires-python = ">=3.11"
-keywords = [ "aioartifactory" ]
-dependencies = [
-    "aiofiles",
-    "aiohttp[speedups]",
-    "tealogger==0.8.3",
-    "rich",
+license = {file = "LICENSE"}
+keywords = [
+    "aioartifactory"
 ]
-dynamic = [
-    "version",
-    "readme"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Artifactory",
+
+    "License :: OSI Approved :: MIT License",
+
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 
 [project.optional-dependencies]
 develop = [
     "build",
-    "coverage",
-    "pylint",
-    "pytest",
     "pytest-asyncio",
-    "twine",
+    "pytest-cov",
+    "pytest",
+    "ruff",
+    "twine"
 ]
 test = [
-    "coverage",
-    "pylint",
-    "pytest",
     "pytest-asyncio",
+    "pytest-cov",
+    "pytest",
+    "ruff",
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/YTKme/aioartifactory"
 "Bug Tracker" = "https://github.com/YTKme/aioartifactory/issues"
 
-[tool.autopep8]
-
 [tool.distutils.bdist_wheel]
 universal = true
+
+[tool.ruff.format]
+quote-style = "single"
 
 [tool.setuptools]
 packages = [
@@ -56,5 +71,5 @@ packages = [
 ]
 
 [tool.setuptools.dynamic]
+readme = {file = ["README.md"], content-type = "text/markdown"}
 version = {file = "VERSION"}
-readme = {file = ["README.md"]}
