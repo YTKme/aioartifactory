@@ -1,9 +1,11 @@
 {
     "editor.insertSpaces": true,
     "python.testing.pytestArgs": [
-        "-s",
-        "-vvvv",
-        "-l"
+        "--showlocals",
+        "--capture=tee-sys",
+        "-vvvvv",
+        "--durations=0",
+        "--junit-xml=junit-report.xml"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
