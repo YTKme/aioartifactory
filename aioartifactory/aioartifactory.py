@@ -43,10 +43,9 @@ class RemotePath(PurePath):
         *args,
         **kwargs
     ):
-        """Customize Constructor
+        """Initialize Constructor
 
-        :param path: The URL of the Remote
-            Path
+        :param path: The URL of the Remote Path
         :type path: str
         """
         super().__init__(*args)

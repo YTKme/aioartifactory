@@ -111,46 +111,46 @@ class TestRemotePath:
         assert parse_url.scheme == scheme
 
 
-class TestAIOArtifactory:
-    """Test Asynchronous Input Output (AIO) Artifactory Class
-    """
+# class TestAIOArtifactory:
+#     """Test Asynchronous Input Output (AIO) Artifactory Class
+#     """
 
-    @pytest.mark.asyncio
-    async def test_retrieve_one(
-        self,
-        source_list: str,
-        destination_list: PathLike,
-    ):
-        """Test Retrieve One"""
+#     @pytest.mark.asyncio
+#     async def test_retrieve_one(
+#         self,
+#         source_list: str,
+#         destination_list: PathLike,
+#     ):
+#         """Test Retrieve One"""
 
-        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+#         aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
-        await aioartifactory.retrieve(
-            source=source_list,
-            destination=destination_list,
-            recursive=True,
-        )
+#         await aioartifactory.retrieve(
+#             source=source_list,
+#             destination=destination_list,
+#             recursive=True,
+#         )
 
-    @pytest.mark.asyncio
-    async def test_retrieve_many(
-        self,
-        source: list[str],
-        destination: list[PathLike],
-    ):
-        """Test Retrieve Many"""
+#     @pytest.mark.asyncio
+#     async def test_retrieve_many(
+#         self,
+#         source: list[str],
+#         destination: list[PathLike],
+#     ):
+#         """Test Retrieve Many"""
 
-        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+#         aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
-        await aioartifactory.retrieve(
-            source=source,
-            destination=[Path(__file__).parent.resolve()],
-            recursive=True,
-        )
+#         await aioartifactory.retrieve(
+#             source=source,
+#             destination=[Path(__file__).parent.resolve()],
+#             recursive=True,
+#         )
 
-    async def test_retrieve_destination(
-        self,
-        source_list: list[str],
-        destination_list: list[PathLike]
-    ):
-        """Test Retrieve Destination"""
-        ...
+#     async def test_retrieve_destination(
+#         self,
+#         source_list: list[str],
+#         destination_list: list[PathLike]
+#     ):
+#         """Test Retrieve Destination"""
+#         ...

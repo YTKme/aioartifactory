@@ -3,7 +3,12 @@ Asynchronous Input Output (AIO) Artifactory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
 
-from .aioartifactory import (
-    AIOArtifactory,
-    RemotePath,
-)
+# Class
+from .aioartifactory import AIOArtifactory
+from .aioartifactory import RemotePath
+
+__all__ = [
+    # Class
+    'AIOArtifactory',
+    'RemotePath',
+]

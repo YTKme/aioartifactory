@@ -94,11 +94,6 @@
                 "stderr",
                 "stdout"
             ]
-        },
-        "tealogger.test.package.level": {
-            "level": "WARNING",
-            "propagate": true,
-            "filters": []
         }
     },
     "root": {
