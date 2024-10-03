@@ -1,10 +1,12 @@
 aiofiles
 aiohttp[speedups]
 build
-pylint
 pytest
 pytest-asyncio
+pytest-cov
 rich
+ruff
 sphinx
-tealogger==0.8.3
+tealogger
+tox
 twine
