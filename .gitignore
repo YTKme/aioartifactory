@@ -3,6 +3,10 @@
 ###########
 
 aioartifactory/test/data.json
+aioartifactory/test/test_aioartifactory.json
+
+# Test
+junit-report.xml
 
 ##########
 # Python #
