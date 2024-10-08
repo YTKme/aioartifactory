@@ -4,15 +4,16 @@ Asynchronous Input Output (AIO) Artifactory
 """
 
 from asyncio import (BoundedSemaphore, Queue, TaskGroup)
+import os
 from os import PathLike
-from pathlib import Path, PurePath
+from pathlib import (_PosixFlavour, _WindowsFlavour, Path, PurePath)
 from types import TracebackType
 from typing import (AsyncGenerator, Optional, Type)
-from urllib.parse import unquote, urlparse
+from urllib.parse import (unquote, urlparse)
 
 import aiofiles
 from aiohttp import (ClientSession, ClientTimeout, TCPConnector)
-from rich.progress import Progress
+# from rich.progress import Progress
 import tealogger
 
 from aioartifactory.configuration import (
@@ -27,15 +28,25 @@ tealogger.set_level(tealogger.DEBUG)
 
 class RemotePath(PurePath):
     """Remote Path
+
+    :param path: The URL of the Remote Path
+    :type path: str
+    :param api_key: The Artifactory API Key
+    :type api_key: str, optional
     """
+
+    # NOTE: Backward compatibility for 3.11, remove in Python 3.12
+    _flavour = _PosixFlavour() if os.name == 'posix' else _WindowsFlavour()
 
     def __new__(
         cls,
+        path: str,
+        api_key: Optional[str] = None,  # NOTE: 3.11
         *args,
         **kwargs
     ):
         """Create Constructor"""
-        return super().__new__(cls, *args, **kwargs)
+        return super().__new__(cls, path, *args, **kwargs)
 
     def __init__(
         self,
@@ -161,7 +172,7 @@ class RemotePath(PurePath):
         """
 
         storage_api_url = self._get_storage_api_url()
-        # tealogger.debug(f'Storage API URL: {storage_api_url}')
+        tealogger.debug(f'Storage API URL: {storage_api_url}')
 
         async with ClientSession() as session:
             async with session.get(
