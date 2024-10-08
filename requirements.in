@@ -1,4 +1,5 @@
 aiofiles
+aiohttp
 aiohttp[speedups]
 build
 pytest
