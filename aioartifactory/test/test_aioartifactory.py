@@ -35,22 +35,27 @@ class TestRemotePath:
 
         assert isinstance(remote_path, PurePath)
 
-    def test_name(self, path: str):
+    def test_name(self, path: str, name: str):
         """Test Name"""
 
         remote_path = RemotePath(path=path)
 
         tealogger.debug(f'Remote Path Name: {remote_path.name}')
 
-    def test_location(self, path: str):
+        assert remote_path.name == name
+
+    def test_location(self, path: str, location: PurePath):
         """Test Location"""
 
         remote_path = RemotePath(path=path)
 
         tealogger.debug(f'Remote Path Location: {remote_path.location}')
 
+        assert isinstance(remote_path.location, PurePath)
+        assert str(remote_path.location) == str(location)
+
     @pytest.mark.asyncio
-    async def test_sha256(self, path: str):
+    async def test_sha256(self, path: str, sha256: str):
         """Test SHA256"""
 
         remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
@@ -60,6 +65,7 @@ class TestRemotePath:
         tealogger.debug(f'Remote Path SHA256: {checksum_sha256}')
 
         assert isinstance(checksum_sha256, str)
+        assert checksum_sha256 == sha256
 
     def test_get_storage_api_path(self, path: str):
         """Test Get Storage API Path"""
@@ -111,25 +117,25 @@ class TestRemotePath:
         assert parse_url.scheme == scheme
 
 
-# class TestAIOArtifactory:
-#     """Test Asynchronous Input Output (AIO) Artifactory Class
-#     """
+class TestAIOArtifactory:
+    """Test Asynchronous Input Output (AIO) Artifactory Class
+    """
 
-#     @pytest.mark.asyncio
-#     async def test_retrieve_one(
-#         self,
-#         source_list: str,
-#         destination_list: PathLike,
-#     ):
-#         """Test Retrieve One"""
+    @pytest.mark.asyncio
+    async def test_retrieve_one(
+        self,
+        source_list: str,
+        destination_list: PathLike,
+    ):
+        """Test Retrieve One"""
 
-#         aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
-#         await aioartifactory.retrieve(
-#             source=source_list,
-#             destination=destination_list,
-#             recursive=True,
-#         )
+        await aioartifactory.retrieve(
+            source=source_list,
+            destination=destination_list,
+            recursive=True,
+        )
 
 #     @pytest.mark.asyncio
 #     async def test_retrieve_many(
