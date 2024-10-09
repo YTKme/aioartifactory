@@ -13,14 +13,13 @@ from urllib.parse import (unquote, urlparse)
 
 import aiofiles
 from aiohttp import (ClientSession, ClientTimeout, TCPConnector)
-# from rich.progress import Progress
 import tealogger
 
 from aioartifactory.configuration import (
+    DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
     DEFAULT_MAXIMUM_CONNECTION,
+    DEFAULT_CONNECTION_TIMEOUT,
 )
-from aioartifactory.common import progress
-# from aioartifactory.context import TeardownContextManager
 
 
 tealogger.set_level(tealogger.DEBUG)
@@ -91,7 +90,12 @@ class RemotePath(PurePath):
 
     @property
     def location(self) -> PurePath:
-        """Location"""
+        """Location
+
+        The `location` is defined as the `path` component of the
+        `urlparse` function, without the `/artifactory` prefix `part`.
+        See `urllib.parse.urlparse <https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse>`_.
+        """
         return PurePath(unquote(
             '/'.join(PurePath(self._parse_url.path).parts[2:])
         ))
@@ -172,13 +176,20 @@ class RemotePath(PurePath):
         """
 
         storage_api_url = self._get_storage_api_url()
-        tealogger.debug(f'Storage API URL: {storage_api_url}')
+        # tealogger.debug(f'Storage API URL: {storage_api_url}')
 
         async with ClientSession() as session:
             async with session.get(
                 url=f'{storage_api_url}?list&deep=1',
                 headers=self._header,
             ) as response:
+                if response.status == 400:
+                    # NOTE: Need `and 'Expected a folder' in await response.text()`?
+                    _, separator, after = str(self.location).partition('/')
+                    yield separator + after
+                    # Need to `return` to terminate
+                    return
+
                 data = await response.json()
 
         for file in data['files']:
@@ -213,7 +224,8 @@ class AIOArtifactory:
             self._token = kwargs.get('token')
             self._header = {'Authorization': f'Bearer {self._token}'}
 
-        # bounded_limiter = BoundedSemaphore(DEFAULT_MAXIMUM_CONNECTION)
+        # Retrieve Limiter
+        self._retrieve_limiter = BoundedSemaphore(10)
 
     async def retrieve(
         self,
@@ -248,7 +260,7 @@ class AIOArtifactory:
             destination = [destination]
 
         session_connector = TCPConnector(limit_per_host=maximum_connection)
-        session_timeout = ClientTimeout(total=5 * 60)
+        session_timeout = ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT)
         async with (
             ClientSession(
                 connector=session_connector,
@@ -309,31 +321,24 @@ class AIOArtifactory:
             for _ in range(connection_count):
                 await source_queue.put(None)
 
-        with progress as download_progress:
-            async with TaskGroup() as group:
-                # Optimize maximum connection
-                connection_count = min(download_queue.qsize(), maximum_connection)
+        async with TaskGroup() as group:
+            # Optimize maximum connection
+            connection_count = min(download_queue.qsize(), maximum_connection)
 
-                # Create `connection_count` of `_download_query` worker task(s)
-                # Store them in a `task_list`
-                for count in range(connection_count):
-                    task = progress.add_task(
-                        '',
-                        total=None,
+            # Create `connection_count` of `_download_query` worker task(s)
+            # Store them in a `task_list`
+            for count in range(connection_count):
+                group.create_task(
+                    self._download_task(
+                        destination_list=destination_list,
+                        download_queue=download_queue,
+                        session=session,
                     )
-                    group.create_task(
-                        self._download_task(
-                            destination_list=destination_list,
-                            download_queue=download_queue,
-                            session=session,
-                            progress=download_progress,
-                            task=task,
-                        )
-                    )
+                )
 
-                # Enqueue a `None` signal for worker(s) to exit
-                for _ in range(connection_count):
-                    await download_queue.put(None)
+            # Enqueue a `None` signal for worker(s) to exit
+            for _ in range(connection_count):
+                await download_queue.put(None)
 
     # async def _retrieve_nonrecursive(
     #     self,
@@ -347,6 +352,7 @@ class AIOArtifactory:
         self,
         source_queue: Queue,
         download_queue: Queue,
+        # bounded_limiter: BoundedSemaphore,
         # session: ClientSession,
     ):
         """Retrieve Task
@@ -369,18 +375,15 @@ class AIOArtifactory:
             # Enqueue the retrieve query response
             remote_path = RemotePath(path=source, api_key=self._api_key)
             async for file in remote_path.get_file_list():
-                tealogger.debug(f'File: {source.rstrip("/")}{file}')
-                await download_queue.put(
-                    f'{source.rstrip("/")}{file}'
-                )
+                before, _, _ = source.rpartition('/')
+                tealogger.debug(f'File: {before}{file}')
+                await download_queue.put(f'{before}{file}')
 
     async def _download_task(
         self,
         destination_list: list[PathLike],
         download_queue: Queue,
         session: ClientSession,
-        progress: Progress,
-        task: Task,
     ):
         """Download Task
 
