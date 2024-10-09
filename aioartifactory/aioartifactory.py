@@ -19,7 +19,7 @@ import tealogger
 from aioartifactory.configuration import (
     DEFAULT_MAXIMUM_CONNECTION,
 )
-# from aioartifactory.common import progress
+from aioartifactory.common import progress
 # from aioartifactory.context import TeardownContextManager
 
 
@@ -309,25 +309,31 @@ class AIOArtifactory:
             for _ in range(connection_count):
                 await source_queue.put(None)
 
-        async with TaskGroup() as group:
-            # Optimize maximum connection
-            connection_count = min(download_queue.qsize(), maximum_connection)
+        with progress as download_progress:
+            async with TaskGroup() as group:
+                # Optimize maximum connection
+                connection_count = min(download_queue.qsize(), maximum_connection)
 
-            # Create `connection_count` of `_download_query` worker task(s)
-            # Store them in a `task_list`
-            _ = [
-                group.create_task(
-                    self._download_task(
-                        destination_list=destination_list,
-                        download_queue=download_queue,
-                        session=session,
+                # Create `connection_count` of `_download_query` worker task(s)
+                # Store them in a `task_list`
+                for count in range(connection_count):
+                    task = progress.add_task(
+                        '',
+                        total=None,
                     )
-                ) for _ in range(connection_count)
-            ]
+                    group.create_task(
+                        self._download_task(
+                            destination_list=destination_list,
+                            download_queue=download_queue,
+                            session=session,
+                            progress=download_progress,
+                            task=task,
+                        )
+                    )
 
-            # Enqueue a `None` signal for worker(s) to exit
-            for _ in range(connection_count):
-                await download_queue.put(None)
+                # Enqueue a `None` signal for worker(s) to exit
+                for _ in range(connection_count):
+                    await download_queue.put(None)
 
     # async def _retrieve_nonrecursive(
     #     self,
@@ -373,6 +379,8 @@ class AIOArtifactory:
         destination_list: list[PathLike],
         download_queue: Queue,
         session: ClientSession,
+        progress: Progress,
+        task: Task,
     ):
         """Download Task
 
