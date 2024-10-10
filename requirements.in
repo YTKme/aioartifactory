@@ -1,0 +1,13 @@
+aiofiles
+aiohttp
+aiohttp[speedups]
+build
+pytest
+pytest-asyncio
+pytest-cov
+rich
+ruff
+sphinx
+tealogger
+tox
+twine

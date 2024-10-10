@@ -1,0 +1,6 @@
+[MAIN]
+
+[MESSAGES CONTROL]
+disable=
+#    logging-fstring-interpolation,
+#    too-many-arguments,

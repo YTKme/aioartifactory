@@ -1,0 +1,54 @@
+{
+    "TestRemotePath": {
+        "test_construct": {
+            "path": [
+                "https://artifactory.acme.com/artifactory/repository/path/subpath/"
+            ]
+        },
+        "test_name": {
+            "path": [
+                "https://username:password@localhost.lcl/artifactory/repository/path/;parameter=a,b,c?query&key=value#fragment",
+                "https://artifactory.acme.com/artifactory/repository/path/subpath/file.ext"
+            ]
+        },
+        "test_path": {
+            "path": [
+                "https://username:password@localhost.lcl/artifactory/repository/path/;parameter=a,b,c?query&key=value#fragment",
+                "https://artifactory.acme.com/artifactory/repository/path/subpath/file.ext"
+            ]
+        },
+        "test_sha256": {
+            "path": [
+                "https://artifactory.acme.com/artifactory/repository/path/subpath/file.ext"
+            ]
+        },
+        "test_get_storage_api_path": {
+            "path": [
+                "https://username:password@localhost.lcl/artifactory/repository/path/;parameter=a,b,c?query&key=value#fragment"
+            ]
+        },
+        "test_get_storage_api_url": {
+            "path": [
+                "https://username:password@localhost.lcl/artifactory/repository/path/;parameter=a,b,c?query&key=value#fragment"
+            ],
+            "scheme": [
+                "https"
+            ]
+        }
+    },
+    "TestAIOArtifactory": {
+        "test_retrieve_one": {
+            "source_list": [
+                "https://artifactory.acme.com/artifactory/repository/path/subpath/"
+            ]
+        },
+        "test_retrieve_many": {
+            "source_list": [
+                [
+                    "https://artifactory.acme.com/artifactory/repository/path/subpath/",
+                    "https://artifactory.acme.com/artifactory/repository/path/subpath/file.ext"
+                ]
+            ]
+        }
+    }
+}
