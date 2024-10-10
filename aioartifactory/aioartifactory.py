@@ -169,7 +169,10 @@ class RemotePath(PurePath):
             f'{parse_url_tail}'
         )
 
-    async def get_file_list(self) -> AsyncGenerator[str, None]:
+    async def get_file_list(
+        self,
+        # recursive: bool = False,
+    ) -> AsyncGenerator[str, None]:
         """Get File List
 
         Get a list of file(s) for the Remote Path
@@ -178,9 +181,13 @@ class RemotePath(PurePath):
         storage_api_url = self._get_storage_api_url()
         # tealogger.debug(f'Storage API URL: {storage_api_url}')
 
+        # query = 'list&deep=1' if recursive else 'list'
+        query = 'list&deep=1'
+        query += '&listFolders=0&includeRootPath=0'
+
         async with ClientSession() as session:
             async with session.get(
-                url=f'{storage_api_url}?list&deep=1',
+                url=f'{storage_api_url}?{query}',
                 headers=self._header,
             ) as response:
                 if response.status == 400:
@@ -375,6 +382,7 @@ class AIOArtifactory:
             # Enqueue the retrieve query response
             remote_path = RemotePath(path=source, api_key=self._api_key)
             async for file in remote_path.get_file_list():
+                # Get partition before the last `/`
                 before, _, _ = source.rpartition('/')
                 tealogger.debug(f'File: {before}{file}')
                 await download_queue.put(f'{before}{file}')
