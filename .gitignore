@@ -5,7 +5,11 @@
 aioartifactory/test/data.json
 aioartifactory/test/test_aioartifactory.json
 
+# Ruff
+.ruff_cache/
+
 # Test
+out/
 junit-report.xml
 
 ##########
