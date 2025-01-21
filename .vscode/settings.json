@@ -1,14 +1,19 @@
 {
     "editor.insertSpaces": true,
+    "autopep8.args": [
+        "--experimental",
+        "--ignore=E501",
+        // "--max-line-length", "120",
+    ],
     "python.testing.pytestArgs": [
         "--showlocals",
         "--capture=tee-sys",
         "-vvvvv",
         "--durations=0",
-        "--junit-xml=junit-report.xml"
+        "--junit-xml",
     ],
-    "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
     "[json]": {
         "editor.tabSize": 4
     },
@@ -19,13 +24,5 @@
         "editor.defaultFormatter": "ms-python.autopep8",
         "editor.formatOnSave": false,
         "editor.tabSize": 4
-    },
-    "editor.codeActionsOnSave": {
-        "source.organizeImports": "never"
-    },
-    "autopep8.args": [
-        "--experimental",
-        "--ignore=E501",
-        // "--max-line-length", "120",
-    ]
+    }
 }
