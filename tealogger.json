@@ -139,6 +139,15 @@
                 "stderr",
                 "stdout"
             ]
+        },
+        "test.aioartifactory": {
+            "level": "DEBUG",
+            "propagate": false,
+            "filters": [],
+            "handlers": [
+                "stderr",
+                "stdout"
+            ]
         }
     },
     "root": {
