@@ -2,6 +2,12 @@
 
 Python Asynchronous Input Output (AIO) Artifactory
 
+## Table of Content
+
+* [Glossary](#glossary)
+* [Reference](#reference)
+    * [Artifactory](#artifactory)
+
 ## Glossary
 
 ### Local Path
