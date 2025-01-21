@@ -3,11 +3,18 @@ Configuration
 ~~~~~~~~~~~~~
 """
 
-# Artifactory
+###############
+# Artifactory #
+###############
+
 DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT = 1_000
 DEFAULT_ARTIFACTORY_SEARCH_MAX_RESULT = 500
 
-# Miscellaneous
+#################
+# Miscellaneous #
+#################
+
+# The maximum parallel connection use to retrieve artifact(s)
 DEFAULT_MAXIMUM_CONNECTION = 1
 DEFAULT_CONNECTION_TIMEOUT = 30 * 60  # 30 Minute
 
