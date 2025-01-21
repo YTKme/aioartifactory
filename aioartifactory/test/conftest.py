@@ -23,18 +23,14 @@ from pytest import (
 
 import tealogger
 
-# Configure conftest_logger
+
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
-with open(
-    CURRENT_MODULE_PATH.parent / 'tealogger.json',
-    mode='r',
-    encoding='utf-8'
-) as file:
-    configuration = json.load(file)
-conftest_logger = tealogger.TeaLogger(
-    name=__name__,
-    dictConfig=configuration
+
+# Configure conftest_logger
+tealogger.configure(
+    configuration=CURRENT_MODULE_PATH.parent / 'tealogger.json'
 )
+conftest_logger = tealogger.get_logger(__name__)
 
 
 def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager):
