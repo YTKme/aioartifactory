@@ -6,10 +6,10 @@ Asynchronous Input Output (AIO) Artifactory
 from asyncio import (BoundedSemaphore, Queue, TaskGroup)
 import os
 from os import PathLike
-from pathlib import (_PosixFlavour, _WindowsFlavour, Path, PurePath)
+from pathlib import Path
 from types import TracebackType
-from typing import (AsyncGenerator, Optional, Type)
-from urllib.parse import (unquote, urlparse)
+from typing import (Optional, Type)
+from urllib.parse import (urlparse)
 
 import aiofiles
 from aiohttp import (ClientSession, ClientTimeout, TCPConnector)
@@ -20,187 +20,7 @@ from aioartifactory.configuration import (
     DEFAULT_MAXIMUM_CONNECTION,
     DEFAULT_CONNECTION_TIMEOUT,
 )
-
-
-tealogger.set_level(tealogger.DEBUG)
-
-
-class RemotePath(PurePath):
-    """Remote Path
-
-    :param path: The URL of the Remote Path
-    :type path: str
-    :param api_key: The Artifactory API Key
-    :type api_key: str, optional
-    """
-
-    # NOTE: Backward compatibility for 3.11, remove in Python 3.12
-    _flavour = _PosixFlavour() if os.name == 'posix' else _WindowsFlavour()
-
-    def __new__(
-        cls,
-        path: str,
-        api_key: Optional[str] = None,  # NOTE: 3.11
-        *args,
-        **kwargs
-    ):
-        """Create Constructor"""
-        return super().__new__(cls, path, *args, **kwargs)
-
-    def __init__(
-        self,
-        path: str,
-        *args,
-        **kwargs
-    ):
-        """Initialize Constructor
-
-        :param path: The URL of the Remote Path
-        :type path: str
-        """
-        super().__init__(*args)
-
-        # Authentication
-        if kwargs.get('api_key'):
-            self._api_key = kwargs.get('api_key')
-            self._header = {'X-JFrog-Art-Api': self._api_key}
-        elif kwargs.get('token'):
-            self._token = kwargs.get('token')
-            self._header = {'Authorization': f'Bearer {self._token}'}
-
-        self._path = path
-
-        # TODO: Validate URL
-
-        # Parse the URL path
-        self._parse_url = urlparse(path)
-
-    def __str__(self):
-        """Informal or Nicely Printable String Representation"""
-        return f'{self._path}'
-
-    def __repr__(self):
-        """Official String Representation"""
-        return f'{self.__class__.__name__}({self._path!r})'
-
-    @property
-    def name(self) -> str:
-        """Name"""
-        return unquote(PurePath(self._parse_url.path).name)
-
-    @property
-    def location(self) -> PurePath:
-        """Location
-
-        The `location` is defined as the `path` component of the
-        `urlparse` function, without the `/artifactory` prefix `part`.
-        See `urllib.parse.urlparse <https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse>`_.
-        """
-        return PurePath(unquote(
-            '/'.join(PurePath(self._parse_url.path).parts[2:])
-        ))
-
-    @property
-    async def sha256(self) -> str:
-        """SHA256
-
-        Get the SHA-256 checksum of the Remote Path if available, else
-        return None.
-
-        :return: The SHA-256 checksum of the Remote Path
-        :rtype: str, None
-        """
-        storage_api_url = self._get_storage_api_url()
-        # tealogger.debug(f'Storage API URL: {storage_api_url}')
-
-        async with ClientSession() as session:
-            async with session.get(
-                url=storage_api_url,
-                headers=self._header,
-            ) as response:
-                data = await response.json()
-
-        return data['checksums']['sha256']
-
-    def _get_storage_api_path(
-        self
-    ) -> PurePath:
-        """Get Storage API Path
-
-        Get the storage API path of the Remote Path. Return it as a
-        valid PurePath.
-
-        :return: The PurePath of the storage API path
-        :rtype: PurePath
-        """
-        return PurePath(
-            '//',
-            # Network Location and Path
-            '/'.join([
-                self._parse_url.netloc,
-                *self._parse_url.path.split('/')[:2],
-                'api/storage',
-                *self._parse_url.path.split('/')[2:],
-            ]),
-        )
-
-    def _get_storage_api_url(
-        self
-    ) -> str:
-        """Get Storage API URL
-        """
-
-        # The rest of the element(s) for URL
-        parse_url_tail = ''.join([
-            # Parameter
-            ';' if self._parse_url.params else '',
-            self._parse_url.params,
-            # Query
-            '?' if self._parse_url.query else '',
-            self._parse_url.query,
-            # Fragment
-            '#' if self._parse_url.fragment else '',
-            self._parse_url.fragment,
-        ])
-
-        return (
-            f'{self._parse_url.scheme}:'
-            f'{self._get_storage_api_path()}'
-            f'{parse_url_tail}'
-        )
-
-    async def get_file_list(
-        self,
-        recursive: bool = False,
-    ) -> AsyncGenerator[str, None]:
-        """Get File List
-
-        Get a list of file(s) for the Remote Path
-        """
-
-        storage_api_url = self._get_storage_api_url()
-        # tealogger.debug(f'Storage API URL: {storage_api_url}')
-
-        query = 'list&deep=1' if recursive else 'list'
-        query += '&listFolders=0&includeRootPath=0'
-        # tealogger.debug(f'Query: {query}')
-
-        async with ClientSession() as session:
-            async with session.get(
-                url=f'{storage_api_url}?{query}',
-                headers=self._header,
-            ) as response:
-                if response.status == 400:
-                    # NOTE: Need `and 'Expected a folder' in await response.text()`?
-                    _, separator, after = str(self.location).partition('/')
-                    yield separator + after
-                    # Need to `return` to terminate
-                    return
-
-                data = await response.json()
-
-        for file in data['files']:
-            yield file['uri']
+from aioartifactory.remotepath import RemotePath
 
 
 class AIOArtifactory:
@@ -215,7 +35,7 @@ class AIOArtifactory:
 
     def __init__(
         self,
-        host: str,
+        # host: str,
         port: int = 443,
         *args,
         **kwargs
@@ -233,7 +53,7 @@ class AIOArtifactory:
         :param token: The Artifactory Token
         :type token: str, optional
         """
-        self._host = host
+        # self._host = host
         self._port = port
 
         # Authentication
@@ -248,15 +68,12 @@ class AIOArtifactory:
         self._retrieve_limiter = BoundedSemaphore(10)
 
         # Client Session
-        self._client_session = ClientSession(
-            connector=TCPConnector(limit_per_host=DEFAULT_MAXIMUM_CONNECTION),
-            timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
-        )
+        self._client_session = None
 
-    @property
-    async def host(self) -> str:
-        """Host"""
-        return self._host
+    # @property
+    # async def host(self) -> str:
+    #     """Host"""
+    #     return self._host
 
     @property
     def port(self) -> int:
@@ -291,7 +108,15 @@ class AIOArtifactory:
         if isinstance(destination, str):
             destination = [destination]
 
-        async with self._client_session as session:
+        if self._client_session:
+            client_session = self._client_session
+        else:
+            client_session = ClientSession(
+                connector=TCPConnector(limit_per_host=DEFAULT_MAXIMUM_CONNECTION),
+                timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
+            )
+
+        async with client_session as session:
             return await self._retrieve(
                 source_list=source,
                 destination_list=destination,
@@ -460,6 +285,12 @@ class AIOArtifactory:
     async def __aenter__(self):
         """Asynchronous Enter
         """
+        # Client Session
+        self._client_session = ClientSession(
+            connector=TCPConnector(limit_per_host=DEFAULT_MAXIMUM_CONNECTION),
+            timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
+        )
+
         return self
 
     async def __aexit__(
@@ -478,3 +309,6 @@ class AIOArtifactory:
         :type exception_traceback: Optional[TracebackType]
         """
         await super()
+
+        if self._client_session:
+            await self._client_session.close()

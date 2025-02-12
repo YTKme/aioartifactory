@@ -21,7 +21,7 @@ CURRENT_WORK_PATH = Path().cwd()
 tealogger.configure(
     configuration=CURRENT_MODULE_PATH.parent / 'tealogger.json'
 )
-test_logger = tealogger.get_logger('test.aioartifactory')
+test_logger = tealogger.get_logger('test.remotepath')
 
 
 class TestRemotePath:
@@ -36,8 +36,8 @@ class TestRemotePath:
             api_key=ARTIFACTORY_API_KEY,
         )
 
-        tealogger.debug(f'Remote Path __str__: {str(remote_path)}')
-        tealogger.debug(f'Remote Path __repr__: {repr(remote_path)}')
+        test_logger.debug(f'Remote Path __str__: {str(remote_path)}')
+        test_logger.debug(f'Remote Path __repr__: {repr(remote_path)}')
 
         assert isinstance(remote_path, PurePath)
 
@@ -46,7 +46,7 @@ class TestRemotePath:
 
         remote_path = RemotePath(path=path)
 
-        tealogger.debug(f'Remote Path Name: {remote_path.name}')
+        test_logger.debug(f'Remote Path Name: {remote_path.name}')
 
         assert remote_path.name == name
 
@@ -55,7 +55,7 @@ class TestRemotePath:
 
         remote_path = RemotePath(path=path)
 
-        tealogger.debug(f'Remote Path Location: {remote_path.location}')
+        test_logger.debug(f'Remote Path Location: {remote_path.location}')
 
         assert isinstance(remote_path.location, PurePath)
         assert str(remote_path.location) == str(location)
@@ -68,7 +68,7 @@ class TestRemotePath:
 
         checksum_sha256 = await remote_path.sha256
 
-        tealogger.debug(f'Remote Path SHA256: {checksum_sha256}')
+        test_logger.debug(f'Remote Path SHA256: {checksum_sha256}')
 
         assert isinstance(checksum_sha256, str)
         assert checksum_sha256 == sha256
@@ -90,12 +90,12 @@ class TestRemotePath:
             ]),
         )
 
-        tealogger.debug(
+        test_logger.debug(
             f'Storage API Path: {remote_path._get_storage_api_path()}, '
             f'Type: {type(remote_path._get_storage_api_path())}'
         )
 
-        tealogger.debug(
+        test_logger.debug(
             f'Expected Path: {expected_path}, '
             f'Type: {type(expected_path)}'
         )
@@ -110,14 +110,14 @@ class TestRemotePath:
         remote_path = RemotePath(path=path)
 
         storage_api_url = remote_path._get_storage_api_url()
-        tealogger.debug(
+        test_logger.debug(
             f'Storage API URL: {storage_api_url}, '
             f'Type: {type(storage_api_url)}'
         )
 
         parse_url = urlparse(storage_api_url)
-        tealogger.debug(parse_url)
+        test_logger.debug(parse_url)
 
-        tealogger.debug(f'Class: {self.__class__.__name__}')
+        test_logger.debug(f'Class: {self.__class__.__name__}')
 
         assert parse_url.scheme == scheme
