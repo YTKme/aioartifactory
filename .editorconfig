@@ -1,0 +1,25 @@
+# EditorConfig
+# http://editorconfig.org
+
+# Top Most EditorConfig File
+root = true
+
+[*]
+# Set Default Character Set
+charset = utf-8
+
+# Unix Style Newline With Newline Ending
+end_of_line = lf
+insert_final_newline = true
+
+# Set Identation Style
+indent_style = space
+
+# Remove Whitespace Preceding Newline Character
+trim_trailing_whitespace = true
+
+[*.py]
+indent_size = 4
+
+[*.{yml,yaml}]
+indent_size = 2
