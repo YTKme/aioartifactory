@@ -4,7 +4,6 @@ Asynchronous Input Output (AIO) Artifactory
 """
 
 from asyncio import (BoundedSemaphore, Queue, TaskGroup)
-import os
 from os import PathLike
 from pathlib import Path
 from types import TracebackType
@@ -16,11 +15,20 @@ from aiohttp import (ClientSession, ClientTimeout, TCPConnector)
 import tealogger
 
 from aioartifactory.configuration import (
-    DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
+    # DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
     DEFAULT_MAXIMUM_CONNECTION,
     DEFAULT_CONNECTION_TIMEOUT,
 )
 from aioartifactory.remotepath import RemotePath
+
+
+CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
+
+# Configure logger
+tealogger.configure(
+    configuration=CURRENT_MODULE_PATH / "tealogger.json"
+)
+logger = tealogger.get_logger(__name__)
 
 
 class AIOArtifactory:
@@ -29,17 +37,16 @@ class AIOArtifactory:
     # __slots__ = ()
 
     def __new__(cls, *args, **kwargs):
-        """Create Constructor
-        """
+        """Create Constructor"""
         return super().__new__(cls)
 
     def __init__(
         self,
         # host: str,
-        port: int = 443,
+        # port: int = 443,
         *args,
         **kwargs
-    ):
+    ) -> None:
         """Customize Constructor
 
         The main Artifactory class
@@ -54,15 +61,15 @@ class AIOArtifactory:
         :type token: str, optional
         """
         # self._host = host
-        self._port = port
+        # self._port = port
 
         # Authentication
-        if kwargs.get('api_key'):
-            self._api_key = kwargs.get('api_key')
-            self._header = {'X-JFrog-Art-Api': self._api_key}
-        elif kwargs.get('token'):
-            self._token = kwargs.get('token')
-            self._header = {'Authorization': f'Bearer {self._token}'}
+        if kwargs.get("api_key"):
+            self._api_key = kwargs.get("api_key")
+            self._header = {"X-JFrog-Art-Api": self._api_key}
+        elif kwargs.get("token"):
+            self._token = kwargs.get("token")
+            self._header = {"Authorization": f"Bearer {self._token}"}
 
         # Retrieve Limiter
         self._retrieve_limiter = BoundedSemaphore(10)
@@ -75,10 +82,10 @@ class AIOArtifactory:
     #     """Host"""
     #     return self._host
 
-    @property
-    def port(self) -> int:
-        """Port"""
-        return self._port
+    # @property
+    # def port(self) -> int:
+    #     """Port"""
+    #     return self._port
 
     async def retrieve(
         self,
@@ -86,13 +93,13 @@ class AIOArtifactory:
         destination: PathLike | list[PathLike],
         recursive: bool = False,
         quiet: bool = False,
-    ):
+    ) -> list[str]:
         """Retrieve
 
-        :param source: The source (Remote) path
-        :type source: str
-        :param destination: The destination (Local) path
-        :type destination: str
+        :param source: The source (Remote) path(s)
+        :type source: str | list[str]
+        :param destination: The destination (Local) path(s)
+        :type destination: str | list[str]
         :param recursive: Whether to recursively retrieve artifact(s)
         :type recursive: bool, optional
         :param quiet: Whether to show retrieve progress
@@ -134,12 +141,12 @@ class AIOArtifactory:
         session: ClientSession,
         recursive: bool,
         quiet: bool,
-    ):
+    ) -> list[str]:
         """Retrieve"""
         # Create a `source_queue` to store the `source_list` to retrieve
         source_queue = Queue()
         # Create a `destination_queue` to store the `destination_list` to retrieve
-        destination_queue = Queue()
+        # destination_queue = Queue()
 
         # Retrieve
         async with TaskGroup() as group:
@@ -161,6 +168,7 @@ class AIOArtifactory:
 
             # Enqueue the `source` to the `source_queue`
             for source in source_list:
+                logger.debug(f"Source: {source}")
                 await source_queue.put(source)
 
             # Enqueue the `destination` to the `destination_queue`
@@ -194,7 +202,7 @@ class AIOArtifactory:
             for _ in range(connection_count):
                 await download_queue.put(None)
 
-        # tealogger.debug(f'Download List: {download_list}')
+        # tealogger.debug(f"Download List: {download_list}")
         return download_list
 
     async def _retrieve_task(
@@ -204,7 +212,7 @@ class AIOArtifactory:
         recursive: bool,
         # bounded_limiter: BoundedSemaphore,
         # session: ClientSession,
-    ):
+    ) -> None:
         """Retrieve Task
 
         :param source_queue: The source queue
@@ -221,16 +229,16 @@ class AIOArtifactory:
             if source is None:
                 break
 
-            tealogger.debug(f'Source: {source}, Type: {type(source)}')
-            tealogger.debug(f'Source Path: {urlparse(source).path}')
+            tealogger.debug(f"Source: {source}, Type: {type(source)}")
+            tealogger.debug(f"Source Path: {urlparse(source).path}")
 
             # Enqueue the retrieve query response
             remote_path = RemotePath(path=source, api_key=self._api_key)
             async for file in remote_path.get_file_list(recursive=recursive):
                 # Get partition before the last `/`
-                before, _, _ = source.rpartition('/')
-                tealogger.debug(f'Source File: {before}{file}')
-                await download_queue.put(f'{before}{file}')
+                before, _, _ = source.rpartition("/")
+                tealogger.debug(f"Source File: {before}{file}")
+                await download_queue.put(f"{before}{file}")
 
     async def _download_task(
         self,
@@ -238,7 +246,7 @@ class AIOArtifactory:
         download_queue: Queue,
         download_list: list[str],
         session: ClientSession,
-    ):
+    ) -> None:
         """Download Task
 
         :param destination_list: The destination list
@@ -257,12 +265,12 @@ class AIOArtifactory:
             if download is None:
                 break
 
-            tealogger.debug(f'Download: {download}, Type: {type(download)}')
+            tealogger.debug(f"Download: {download}, Type: {type(download)}")
 
             remote_path = RemotePath(path=download, api_key=self._api_key)
 
             # Download the file
-            tealogger.debug(f'Downloading: {download}')
+            tealogger.debug(f"Downloading: {download}")
 
             async with session.get(url=str(remote_path), headers=self._header) as response:
                 for destination in destination_list:
@@ -272,15 +280,15 @@ class AIOArtifactory:
                     try:
                         destination_path.parent.mkdir(parents=True, exist_ok=True)
                     except OSError as e:
-                        tealogger.error(f'Operating System Error: {e}')
+                        tealogger.error(f"Operating System Error: {e}")
 
-                    async with aiofiles.open(destination_path, 'wb') as file:
+                    async with aiofiles.open(destination_path, "wb") as file:
                         async for chunk, _ in response.content.iter_chunks():
                             await file.write(chunk)
 
             download_list.append(download)
 
-            tealogger.info(f'Completed: {download}')
+            tealogger.info(f"Completed: {download}")
 
     async def __aenter__(self):
         """Asynchronous Enter
