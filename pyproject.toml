@@ -14,8 +14,7 @@ dynamic = [
 dependencies = [
     "aiofiles",
     "aiohttp[speedups]",
-    "tealogger",
-    "rich",
+    "tealogger"
 ]
 requires-python = ">=3.11"
 authors = [
