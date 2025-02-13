@@ -4,11 +4,22 @@ Remote Path
 """
 
 import os
-from pathlib import (_PosixFlavour, _WindowsFlavour, PurePath)
+from pathlib import (_PosixFlavour, _WindowsFlavour, PurePath, Path)
 from typing import (AsyncGenerator, Optional)
 from urllib.parse import (unquote, urlparse)
 
 from aiohttp import ClientSession
+
+import tealogger
+
+
+CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
+
+# Configure logger
+tealogger.configure(
+    configuration=CURRENT_MODULE_PATH / "tealogger.json"
+)
+logger = tealogger.get_logger("remotepath")
 
 
 class RemotePath(PurePath):
@@ -21,7 +32,7 @@ class RemotePath(PurePath):
     """
 
     # NOTE: Backward compatibility for 3.11, remove in Python 3.12
-    _flavour = _PosixFlavour() if os.name == 'posix' else _WindowsFlavour()
+    _flavour = _PosixFlavour() if os.name == "posix" else _WindowsFlavour()
 
     def __new__(
         cls,
@@ -47,12 +58,12 @@ class RemotePath(PurePath):
         super().__init__(*args)
 
         # Authentication
-        if kwargs.get('api_key'):
-            self._api_key = kwargs.get('api_key')
-            self._header = {'X-JFrog-Art-Api': self._api_key}
-        elif kwargs.get('token'):
-            self._token = kwargs.get('token')
-            self._header = {'Authorization': f'Bearer {self._token}'}
+        if kwargs.get("api_key"):
+            self._api_key = kwargs.get("api_key")
+            self._header = {"X-JFrog-Art-Api": self._api_key}
+        elif kwargs.get("token"):
+            self._token = kwargs.get("token")
+            self._header = {"Authorization": f"Bearer {self._token}"}
 
         self._path = path
 
@@ -63,11 +74,11 @@ class RemotePath(PurePath):
 
     def __str__(self):
         """Informal or Nicely Printable String Representation"""
-        return f'{self._path}'
+        return f"{self._path}"
 
     def __repr__(self):
         """Official String Representation"""
-        return f'{self.__class__.__name__}({self._path!r})'
+        return f"{self.__class__.__name__}({self._path!r})"
 
     @property
     def name(self) -> str:
@@ -83,7 +94,7 @@ class RemotePath(PurePath):
         See `urllib.parse.urlparse <https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse>`_.
         """
         return PurePath(unquote(
-            '/'.join(PurePath(self._parse_url.path).parts[2:])
+            "/".join(PurePath(self._parse_url.path).parts[2:])
         ))
 
     @property
@@ -97,7 +108,7 @@ class RemotePath(PurePath):
         :rtype: str, None
         """
         storage_api_url = self._get_storage_api_url()
-        # tealogger.debug(f'Storage API URL: {storage_api_url}')
+        # tealogger.debug(f"Storage API URL: {storage_api_url}")
 
         async with ClientSession() as session:
             async with session.get(
@@ -106,7 +117,7 @@ class RemotePath(PurePath):
             ) as response:
                 data = await response.json()
 
-        return data['checksums']['sha256']
+        return data["checksums"]["sha256"]
 
     def _get_storage_api_path(self) -> PurePath:
         """Get Storage API Path
@@ -118,13 +129,13 @@ class RemotePath(PurePath):
         :rtype: PurePath
         """
         return PurePath(
-            '//',
+            "//",
             # Network Location and Path
-            '/'.join([
+            "/".join([
                 self._parse_url.netloc,
-                *self._parse_url.path.split('/')[:2],
-                'api/storage',
-                *self._parse_url.path.split('/')[2:],
+                *self._parse_url.path.split("/")[:2],
+                "api/storage",
+                *self._parse_url.path.split("/")[2:],
             ]),
         )
 
@@ -133,22 +144,22 @@ class RemotePath(PurePath):
         """
 
         # The rest of the element(s) for URL
-        parse_url_tail = ''.join([
+        parse_url_tail = "".join([
             # Parameter
-            ';' if self._parse_url.params else '',
+            ";" if self._parse_url.params else "",
             self._parse_url.params,
             # Query
-            '?' if self._parse_url.query else '',
+            "?" if self._parse_url.query else "",
             self._parse_url.query,
             # Fragment
-            '#' if self._parse_url.fragment else '',
+            "#" if self._parse_url.fragment else "",
             self._parse_url.fragment,
         ])
 
         return (
-            f'{self._parse_url.scheme}:'
-            f'{self._get_storage_api_path()}'
-            f'{parse_url_tail}'
+            f"{self._parse_url.scheme}:"
+            f"{self._get_storage_api_path()}"
+            f"{parse_url_tail}"
         )
 
     async def get_file_list(
@@ -157,29 +168,30 @@ class RemotePath(PurePath):
     ) -> AsyncGenerator[str, None]:
         """Get File List
 
-        Get a list of file(s) for the Remote Path
+        Get a list of filename(s) with separator for the Remote Path.
+        (e.g. `/file.ext`).
         """
 
         storage_api_url = self._get_storage_api_url()
-        # tealogger.debug(f'Storage API URL: {storage_api_url}')
+        # logger.debug(f"Storage API URL: {storage_api_url}")
 
-        query = 'list&deep=1' if recursive else 'list'
-        query += '&listFolders=0&includeRootPath=0'
-        # tealogger.debug(f'Query: {query}')
+        query = "list&deep=1" if recursive else "list"
+        query += "&listFolders=0&includeRootPath=0"
+        # logger.debug(f"Query: {query}")
 
         async with ClientSession() as session:
             async with session.get(
-                url=f'{storage_api_url}?{query}',
+                url=f"{storage_api_url}?{query}",
                 headers=self._header,
             ) as response:
                 if response.status == 400:
-                    # NOTE: Need `and 'Expected a folder' in await response.text()`?
-                    _, separator, after = str(self.location).partition('/')
+                    # NOTE: Need `and "Expected a folder" in await response.text()`?
+                    _, separator, after = str(self.location).rpartition("/")
                     yield separator + after
                     # Need to `return` to terminate
                     return
 
                 data = await response.json()
 
-        for file in data['files']:
-            yield file['uri']
+        for file in data["files"]:
+            yield file["uri"]
