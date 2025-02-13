@@ -77,7 +77,7 @@
                 "console"
             ]
         },
-        "aioartifactory.main": {
+        "aioartifactory": {
             "level": "DEBUG",
             "propagate": false,
             "filters": [],
@@ -86,7 +86,16 @@
                 "stdout"
             ]
         },
-        "aioartifactory.test.conftest": {
+        "remotepath": {
+            "level": "DEBUG",
+            "propagate": false,
+            "filters": [],
+            "handlers": [
+                "stderr",
+                "stdout"
+            ]
+        },
+        "test.conftest": {
             "level": "DEBUG",
             "propagate": false,
             "filters": [],

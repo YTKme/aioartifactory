@@ -30,7 +30,7 @@ CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 tealogger.configure(
     configuration=CURRENT_MODULE_PATH.parent / 'tealogger.json'
 )
-conftest_logger = tealogger.get_logger(__name__)
+conftest_logger = tealogger.get_logger("test.conftest")
 
 
 def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager):
