@@ -28,7 +28,7 @@ CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 tealogger.configure(
     configuration=CURRENT_MODULE_PATH / "tealogger.json"
 )
-logger = tealogger.get_logger(__name__)
+logger = tealogger.get_logger("aioartifactory")
 
 
 class AIOArtifactory:
@@ -168,7 +168,6 @@ class AIOArtifactory:
 
             # Enqueue the `source` to the `source_queue`
             for source in source_list:
-                logger.debug(f"Source: {source}")
                 await source_queue.put(source)
 
             # Enqueue the `destination` to the `destination_queue`
@@ -202,7 +201,7 @@ class AIOArtifactory:
             for _ in range(connection_count):
                 await download_queue.put(None)
 
-        # tealogger.debug(f"Download List: {download_list}")
+        # logger.debug(f"Download List: {download_list}")
         return download_list
 
     async def _retrieve_task(
@@ -229,15 +228,15 @@ class AIOArtifactory:
             if source is None:
                 break
 
-            tealogger.debug(f"Source: {source}, Type: {type(source)}")
-            tealogger.debug(f"Source Path: {urlparse(source).path}")
+            logger.debug(f"Source: {source}, Type: {type(source)}")
+            logger.debug(f"Source Path: {urlparse(source).path}")
 
             # Enqueue the retrieve query response
             remote_path = RemotePath(path=source, api_key=self._api_key)
             async for file in remote_path.get_file_list(recursive=recursive):
                 # Get partition before the last `/`
-                before, _, _ = source.rpartition("/")
-                tealogger.debug(f"Source File: {before}{file}")
+                before, _, _ = str(source).rpartition("/")
+                logger.debug(f"Source File: {before}{file}")
                 await download_queue.put(f"{before}{file}")
 
     async def _download_task(
@@ -265,12 +264,12 @@ class AIOArtifactory:
             if download is None:
                 break
 
-            tealogger.debug(f"Download: {download}, Type: {type(download)}")
+            logger.debug(f"Download: {download}, Type: {type(download)}")
 
             remote_path = RemotePath(path=download, api_key=self._api_key)
 
             # Download the file
-            tealogger.debug(f"Downloading: {download}")
+            logger.debug(f"Downloading: {download}")
 
             async with session.get(url=str(remote_path), headers=self._header) as response:
                 for destination in destination_list:
@@ -280,7 +279,7 @@ class AIOArtifactory:
                     try:
                         destination_path.parent.mkdir(parents=True, exist_ok=True)
                     except OSError as e:
-                        tealogger.error(f"Operating System Error: {e}")
+                        logger.error(f"Operating System Error: {e}")
 
                     async with aiofiles.open(destination_path, "wb") as file:
                         async for chunk, _ in response.content.iter_chunks():
@@ -288,7 +287,7 @@ class AIOArtifactory:
 
             download_list.append(download)
 
-            tealogger.info(f"Completed: {download}")
+            logger.info(f"Completed: {download}")
 
     async def __aenter__(self):
         """Asynchronous Enter

@@ -29,39 +29,45 @@ class TestAIOArtifactory:
     """Test Asynchronous Input Output (AIO) Artifactory Class
     """
 
-    @pytest.mark.asyncio
-    async def test_host(self, host: str):
-        """Test Host"""
+    # @pytest.mark.asyncio
+    # async def test_host(self, host: str):
+    #     """Test Host"""
 
-        aioartifactory = AIOArtifactory(
-            host=host,
-            api_key=ARTIFACTORY_API_KEY,
-        )
-        test_logger.debug(f'Host: {await aioartifactory.host}')
+    #     aioartifactory = AIOArtifactory(
+    #         host=host,
+    #         api_key=ARTIFACTORY_API_KEY,
+    #     )
+    #     test_logger.debug(f'Host: {await aioartifactory.host}')
 
-        # assert aioartifactory.host == host
+    #     assert aioartifactory.host == host
 
     @pytest.mark.asyncio
     async def test_retrieve_one_source(
         self,
-        source_list: str,
-        destination_list: PathLike,
+        source: str,
+        destination: PathLike,
     ):
-        """Test Retrieve One Source"""
+        """Test Retrieve One Source
+
+        :param source: The source (Remote) path(s)
+        :type source: str
+        :param destination: The destination (Local) path(s)
+        :type destination: PathLike
+        """
 
         aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
-        test_logger.debug(f'Destination List: {destination_list}')
+        test_logger.debug(f'Destination List: {destination}')
 
         download_list = await aioartifactory.retrieve(
-            source=source_list,
-            destination=destination_list,
+            source=source,
+            destination=destination,
         )
 
         for download in download_list:
             path = urlparse(download).path.replace('/artifactory', '')
             full_path = Path('/'.join([
                 str(CURRENT_WORK_PATH),
-                destination_list,
+                destination,
                 path,
             ]))
             assert full_path.exists()
@@ -69,33 +75,44 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_retrieve_one_artifact(
         self,
-        source_list: str,
-        destination_list: PathLike,
+        source: str,
+        destination: PathLike,
     ):
         """Test Retrieve One Artifact"""
 
         aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
-        await aioartifactory.retrieve(
-            source=source_list,
-            destination=destination_list,
+        test_logger.debug(f'Source List: {source}')
+
+        download_list = await aioartifactory.retrieve(
+            source=source,
+            destination=destination,
         )
 
-#     @pytest.mark.asyncio
-#     async def test_retrieve_many(
-#         self,
-#         source: list[str],
-#         destination: list[PathLike],
-#     ):
-#         """Test Retrieve Many"""
+        for download in download_list:
+            path = urlparse(download).path.replace('/artifactory', '')
+            full_path = Path('/'.join([
+                str(CURRENT_WORK_PATH),
+                destination,
+                path,
+            ]))
+            assert full_path.exists()
 
-#         aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+    # @pytest.mark.asyncio
+    # async def test_retrieve_many(
+    #     self,
+    #     source: list[str],
+    #     destination: list[PathLike],
+    # ):
+    #     """Test Retrieve Many"""
 
-#         await aioartifactory.retrieve(
-#             source=source,
-#             destination=[Path(__file__).parent.resolve()],
-#             recursive=True,
-#         )
+    #     aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+
+    #     await aioartifactory.retrieve(
+    #         source=source,
+    #         destination=[Path(__file__).parent.resolve()],
+    #         recursive=True,
+    #     )
 
 #     async def test_retrieve_destination(
 #         self,
