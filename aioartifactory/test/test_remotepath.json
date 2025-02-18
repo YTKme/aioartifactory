@@ -22,6 +22,19 @@
                     ]
                 }
             },
+            "test_repository": {
+                "strategy": "auto",
+                "data": {
+                    "path": [
+                        "https://username:password@localhost.lcl/artifactory/repository/path/;parameter=a,b,c?query&key=value#fragment",
+                        "https://artifactory.acme.com/artifactory/repository/path/subpath/file.ext"
+                    ],
+                    "repository": [
+                        "repository",
+                        "repository"
+                    ]
+                }
+            },
             "test_location": {
                 "strategy": "auto",
                 "data": {
