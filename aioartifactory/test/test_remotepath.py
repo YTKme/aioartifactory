@@ -13,15 +13,15 @@ import tealogger
 from aioartifactory import RemotePath
 
 
-ARTIFACTORY_API_KEY = os.environ.get('ARTIFACTORY_API_KEY')
+ARTIFACTORY_API_KEY = os.environ.get("ARTIFACTORY_API_KEY")
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 CURRENT_WORK_PATH = Path().cwd()
 
 # Configure test_logger
 tealogger.configure(
-    configuration=CURRENT_MODULE_PATH.parent / 'tealogger.json'
+    configuration=CURRENT_MODULE_PATH.parent / "tealogger.json"
 )
-test_logger = tealogger.get_logger('test.remotepath')
+test_logger = tealogger.get_logger("test.remotepath")
 
 
 class TestRemotePath:
@@ -36,8 +36,8 @@ class TestRemotePath:
             api_key=ARTIFACTORY_API_KEY,
         )
 
-        test_logger.debug(f'Remote Path __str__: {str(remote_path)}')
-        test_logger.debug(f'Remote Path __repr__: {repr(remote_path)}')
+        test_logger.debug(f"Remote Path __str__: {str(remote_path)}")
+        test_logger.debug(f"Remote Path __repr__: {repr(remote_path)}")
 
         assert isinstance(remote_path, PurePath)
 
@@ -46,16 +46,25 @@ class TestRemotePath:
 
         remote_path = RemotePath(path=path)
 
-        test_logger.debug(f'Remote Path Name: {remote_path.name}')
+        test_logger.debug(f"Remote Path Name: {remote_path.name}")
 
         assert remote_path.name == name
+
+    def test_repository(self, path: str, repository: str):
+        """Test Repository"""
+
+        remote_path = RemotePath(path=path)
+
+        test_logger.debug(f"Remote Path Repository: {remote_path.repository}")
+
+        assert remote_path.repository == repository
 
     def test_location(self, path: str, location: PurePath):
         """Test Location"""
 
         remote_path = RemotePath(path=path)
 
-        test_logger.debug(f'Remote Path Location: {remote_path.location}')
+        test_logger.debug(f"Remote Path Location: {remote_path.location}")
 
         assert isinstance(remote_path.location, PurePath)
         assert str(remote_path.location) == str(location)
@@ -68,7 +77,7 @@ class TestRemotePath:
 
         checksum_sha256 = await remote_path.sha256
 
-        test_logger.debug(f'Remote Path SHA256: {checksum_sha256}')
+        test_logger.debug(f"Remote Path SHA256: {checksum_sha256}")
 
         assert isinstance(checksum_sha256, str)
         assert checksum_sha256 == sha256
@@ -80,24 +89,24 @@ class TestRemotePath:
 
         parse_url = urlparse(path)
         expected_path = PurePath(
-            '//',
+            "//",
             # Network Location and Path
-            '/'.join([
+            "/".join([
                 parse_url.netloc,
-                *parse_url.path.split('/')[:2],
-                'api/storage',
-                *parse_url.path.split('/')[2:],
+                *parse_url.path.split("/")[:2],
+                "api/storage",
+                *parse_url.path.split("/")[2:],
             ]),
         )
 
         test_logger.debug(
-            f'Storage API Path: {remote_path._get_storage_api_path()}, '
-            f'Type: {type(remote_path._get_storage_api_path())}'
+            f"Storage API Path: {remote_path._get_storage_api_path()}, "
+            f"Type: {type(remote_path._get_storage_api_path())}"
         )
 
         test_logger.debug(
-            f'Expected Path: {expected_path}, '
-            f'Type: {type(expected_path)}'
+            f"Expected Path: {expected_path}, "
+            f"Type: {type(expected_path)}"
         )
 
         assert isinstance(remote_path._get_storage_api_path(), PurePath)
@@ -111,13 +120,13 @@ class TestRemotePath:
 
         storage_api_url = remote_path._get_storage_api_url()
         test_logger.debug(
-            f'Storage API URL: {storage_api_url}, '
-            f'Type: {type(storage_api_url)}'
+            f"Storage API URL: {storage_api_url}, "
+            f"Type: {type(storage_api_url)}"
         )
 
         parse_url = urlparse(storage_api_url)
         test_logger.debug(parse_url)
 
-        test_logger.debug(f'Class: {self.__class__.__name__}')
+        test_logger.debug(f"Class: {self.__class__.__name__}")
 
         assert parse_url.scheme == scheme

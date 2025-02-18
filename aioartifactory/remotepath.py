@@ -86,6 +86,12 @@ class RemotePath(PurePath):
         return unquote(PurePath(self._parse_url.path).name)
 
     @property
+    def repository(self) -> str:
+        """Repository"""
+
+        return unquote(PurePath(self._parse_url.path).parts[2])
+
+    @property
     def location(self) -> PurePath:
         """Location
 
