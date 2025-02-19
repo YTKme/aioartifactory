@@ -32,8 +32,7 @@ logger = tealogger.get_logger("aioartifactory")
 
 
 class AIOArtifactory:
-    """Asynchronous Input Output (AIO) Artifactory Class
-    """
+    """Asynchronous Input Output (AIO) Artifactory Class"""
     # __slots__ = ()
 
     def __new__(cls, *args, **kwargs):
@@ -87,11 +86,123 @@ class AIOArtifactory:
     #     """Port"""
     #     return self._port
 
+    # ------
+    # Deploy
+    # ------
+
+    async def deploy(
+        self,
+        source: PathLike | list[PathLike],
+        destination: str | list[str],
+        recursive: bool = False,
+        quiet: bool = False,
+    ):
+        """Deploy
+
+        :param source: The source (Local) path(s)
+        :type source: PathLike | list[PathLike]
+        :param destination: The destination (Remote) path(s)
+        :type destination: str | list[str]
+        :param recursive: Whether to recursively deploy artifact(s)
+        :type recursive: bool, optional
+        :param quiet: Whether to show deploy progress
+        :type quiet: bool, optional
+        """
+
+        # Create an `upload_queue`
+        upload_queue = Queue()
+
+        # TODO: Convert one to many...for now
+        if isinstance(source, str):
+            source = [source]
+        if isinstance(destination, str):
+            destination = [destination]
+
+        if self._client_session:
+            client_session = self._client_session
+        else:
+            client_session = ClientSession(
+                connector=TCPConnector(limit_per_host=DEFAULT_MAXIMUM_CONNECTION),
+                timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
+            )
+
+    async def _deploy(
+        self,
+        source_list: list[PathLike],
+        destination_list: list[str],
+        upload_queue: Queue,
+        session: ClientSession,
+        recursive: bool,
+        quiet: bool,
+    ) -> list[str]:
+        """Deploy"""
+        # Create a `source_queue` to store the `source_list` to deploy
+        source_queue = Queue()
+        # Create a `destination_queue` to store the `destination_list` to deploy
+        # destination_queue = Queue()
+
+        # Deploy
+        async with TaskGroup() as group:
+            # Optimize maximum connection
+            connection_count = min(len(source_list), DEFAULT_MAXIMUM_CONNECTION)
+
+            # Create `connection_count` of `_deploy_query` worker task(s)
+            # Store them in a `task_list`
+
+            _ = [
+                group.create_task(
+                    self._deploy_task(
+                        source_queue=source_queue,
+                        upload_queue=upload_queue,
+                        recursive=recursive,
+                        # session=session,
+                    )
+                ) for _ in range(connection_count)
+            ]
+
+        async def _deploy_task(
+            self,
+            source_queue: Queue,
+            upload_queue: Queue,
+            recursive: bool,
+            # bounded_limiter: BoundedSemaphore,
+            # session: ClientSession,
+        ) -> None:
+            """Deploy Task
+
+            :param source_queue: The source queue
+            :type source_queue: Queue
+            :param upload_queue: The upload queue
+            :type upload_queue: Queue
+            :param recursive: Whether to recursively deploy artifact(s)
+            :type recursive: bool
+            """
+            while True:
+                source = await source_queue.get()
+
+                # The signal to exit (check at the beginning)
+                if source is None:
+                    break
+
+                logger.debug(f"Source: {source}, Type: {type(source)}")
+
+                # Enqueue the deploy query response
+                local_path = Path(source).expanduser().resolve()
+                logger.debug(f"Local Path: {local_path}")
+
+                # Enqueue the upload queue
+                await upload_queue.put(local_path)
+
+    # --------
+    # Retrieve
+    # --------
+
     async def retrieve(
         self,
         source: str | list[str],
         destination: PathLike | list[PathLike],
         recursive: bool = False,
+        output_repository: bool = False,
         quiet: bool = False,
     ) -> list[str]:
         """Retrieve
@@ -102,6 +213,9 @@ class AIOArtifactory:
         :type destination: str | list[str]
         :param recursive: Whether to recursively retrieve artifact(s)
         :type recursive: bool, optional
+        :param output_repository: Whether to include the repository name
+            in the destination path, defaults to False
+        :type output_repository: bool, optional
         :param quiet: Whether to show retrieve progress
         :type quiet: bool, optional
         """
@@ -234,6 +348,7 @@ class AIOArtifactory:
             # Enqueue the retrieve query response
             remote_path = RemotePath(path=source, api_key=self._api_key)
             async for file in remote_path.get_file_list(recursive=recursive):
+                logger.warning(f"File: {file}")
                 # Get partition before the last `/`
                 before, _, _ = str(source).rpartition("/")
                 logger.debug(f"Source File: {before}{file}")
