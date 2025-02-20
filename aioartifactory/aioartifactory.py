@@ -14,19 +14,20 @@ import aiofiles
 from aiohttp import (ClientSession, ClientTimeout, TCPConnector)
 import tealogger
 
-from aioartifactory.configuration import (
+from .configuration import (
     # DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
     DEFAULT_MAXIMUM_CONNECTION,
     DEFAULT_CONNECTION_TIMEOUT,
 )
-from aioartifactory.remotepath import RemotePath
+from .localpath import LocalPath
+from .remotepath import RemotePath
 
 
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 
 # Configure logger
 tealogger.configure(
-    configuration=CURRENT_MODULE_PATH / "tealogger.json"
+    configuration=CURRENT_MODULE_PATH.parent / "tealogger.json"
 )
 logger = tealogger.get_logger("aioartifactory")
 
@@ -76,33 +77,23 @@ class AIOArtifactory:
         # Client Session
         self._client_session = None
 
-    # @property
-    # async def host(self) -> str:
-    #     """Host"""
-    #     return self._host
-
-    # @property
-    # def port(self) -> int:
-    #     """Port"""
-    #     return self._port
-
     # ------
     # Deploy
     # ------
 
     async def deploy(
         self,
-        source: PathLike | list[PathLike],
-        destination: str | list[str],
+        source: LocalPath | list[LocalPath],
+        destination: RemotePath | list[RemotePath],
         recursive: bool = False,
         quiet: bool = False,
     ):
         """Deploy
 
         :param source: The source (Local) path(s)
-        :type source: PathLike | list[PathLike]
+        :type source: LocalPath | list[LocalPath]
         :param destination: The destination (Remote) path(s)
-        :type destination: str | list[str]
+        :type destination: RemotePath | list[RemotePath]
         :param recursive: Whether to recursively deploy artifact(s)
         :type recursive: bool, optional
         :param quiet: Whether to show deploy progress
@@ -160,38 +151,38 @@ class AIOArtifactory:
                 ) for _ in range(connection_count)
             ]
 
-        async def _deploy_task(
-            self,
-            source_queue: Queue,
-            upload_queue: Queue,
-            recursive: bool,
-            # bounded_limiter: BoundedSemaphore,
-            # session: ClientSession,
-        ) -> None:
-            """Deploy Task
+    async def _deploy_task(
+        self,
+        source_queue: Queue,
+        upload_queue: Queue,
+        recursive: bool,
+        # bounded_limiter: BoundedSemaphore,
+        # session: ClientSession,
+    ) -> None:
+        """Deploy Task
 
-            :param source_queue: The source queue
-            :type source_queue: Queue
-            :param upload_queue: The upload queue
-            :type upload_queue: Queue
-            :param recursive: Whether to recursively deploy artifact(s)
-            :type recursive: bool
-            """
-            while True:
-                source = await source_queue.get()
+        :param source_queue: The source queue
+        :type source_queue: Queue
+        :param upload_queue: The upload queue
+        :type upload_queue: Queue
+        :param recursive: Whether to recursively deploy artifact(s)
+        :type recursive: bool
+        """
+        while True:
+            source = await source_queue.get()
 
-                # The signal to exit (check at the beginning)
-                if source is None:
-                    break
+            # The signal to exit (check at the beginning)
+            if source is None:
+                break
 
-                logger.debug(f"Source: {source}, Type: {type(source)}")
+            logger.debug(f"Source: {source}, Type: {type(source)}")
 
-                # Enqueue the deploy query response
-                local_path = Path(source).expanduser().resolve()
-                logger.debug(f"Local Path: {local_path}")
+            # Enqueue the deploy query response
+            local_path = Path(source).expanduser().resolve()
+            logger.debug(f"Local Path: {local_path}")
 
-                # Enqueue the upload queue
-                await upload_queue.put(local_path)
+            # Enqueue the upload queue
+            await upload_queue.put(local_path)
 
     # --------
     # Retrieve
@@ -348,7 +339,6 @@ class AIOArtifactory:
             # Enqueue the retrieve query response
             remote_path = RemotePath(path=source, api_key=self._api_key)
             async for file in remote_path.get_file_list(recursive=recursive):
-                logger.warning(f"File: {file}")
                 # Get partition before the last `/`
                 before, _, _ = str(source).rpartition("/")
                 logger.debug(f"Source File: {before}{file}")

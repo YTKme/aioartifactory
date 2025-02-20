@@ -1,0 +1,24 @@
+{
+    "test_localpath": {
+        "TestLocalPath": {
+            "test_construct": {
+                "strategy": "auto",
+                "data": {
+                    "path": [
+                        "/opt/python/3.11.11/lib/python3.11/__hello__.py",
+                        "C:\\Tool\\Python\\3.11.11\\Lib\\__hello__.py",
+                        "C:/Tool/Python/3.11.11/Lib/__hello__.py"
+                    ]
+                }
+            },
+            "test_get_file_list": {
+                "strategy": "auto",
+                "data": {
+                    "path": [
+                        "."
+                    ]
+                }
+            }
+        }
+    }
+}
