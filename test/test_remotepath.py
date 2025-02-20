@@ -25,8 +25,7 @@ test_logger = tealogger.get_logger("test.remotepath")
 
 
 class TestRemotePath:
-    """Test Remote Path
-    """
+    """Test Remote Path"""
 
     def test_construct(self, path: str):
         """Test Construct"""

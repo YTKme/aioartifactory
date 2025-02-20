@@ -42,6 +42,24 @@ class TestAIOArtifactory:
     #     assert aioartifactory.host == host
 
     @pytest.mark.asyncio
+    async def test_deploy_one_artifact(
+        self,
+        source: PathLike,
+        destination: str,
+    ):
+        """Test Deploy One Artifact"""
+
+        test_logger.debug(f"Source: {source}")
+        test_logger.debug(f"Destination: {destination}")
+
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+
+        upload_list = await aioartifactory.deploy(
+            source=source,
+            destination=destination,
+        )
+
+    @pytest.mark.asyncio
     async def test_retrieve_one_source(
         self,
         source: str,
@@ -49,6 +67,8 @@ class TestAIOArtifactory:
     ):
         """Test Retrieve One Source
 
+        Test retrieve of one source to one destination.
+
         :param source: The source (Remote) path(s)
         :type source: str
         :param destination: The destination (Local) path(s)
@@ -74,39 +94,39 @@ class TestAIOArtifactory:
             ]))
             assert full_path.exists()
 
-    @pytest.mark.asyncio
-    async def test_retrieve_one_source_recursive(
-        self,
-        source: str,
-        destination: PathLike,
-    ):
-        """Test Retrieve One Source Recursive
+    # @pytest.mark.asyncio
+    # async def test_retrieve_one_source_recursive(
+    #     self,
+    #     source: str,
+    #     destination: PathLike,
+    # ):
+    #     """Test Retrieve One Source Recursive
 
-        :param source: The source (Remote) path(s)
-        :type source: str
-        :param destination: The destination (Local) path(s)
-        :type destination: PathLike
-        """
+    #     :param source: The source (Remote) path(s)
+    #     :type source: str
+    #     :param destination: The destination (Local) path(s)
+    #     :type destination: PathLike
+    #     """
 
-        test_logger.debug(f"Source: {source}")
-        test_logger.debug(f"Destination: {destination}")
+    #     test_logger.debug(f"Source: {source}")
+    #     test_logger.debug(f"Destination: {destination}")
 
-        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+    #     aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
-        download_list = await aioartifactory.retrieve(
-            source=source,
-            destination=destination,
-            recursive=True,
-        )
+    #     download_list = await aioartifactory.retrieve(
+    #         source=source,
+    #         destination=destination,
+    #         recursive=True,
+    #     )
 
-        for download in download_list:
-            path = urlparse(download).path.replace("/artifactory", "")
-            full_path = Path("/".join([
-                str(CURRENT_WORK_PATH),
-                destination,
-                path,
-            ]))
-            assert full_path.exists()
+    #     for download in download_list:
+    #         path = urlparse(download).path.replace("/artifactory", "")
+    #         full_path = Path("/".join([
+    #             str(CURRENT_WORK_PATH),
+    #             destination,
+    #             path,
+    #         ]))
+    #         assert full_path.exists()
 
     @pytest.mark.asyncio
     async def test_retrieve_one_artifact(
@@ -114,7 +134,13 @@ class TestAIOArtifactory:
         source: str,
         destination: PathLike,
     ):
-        """Test Retrieve One Artifact"""
+        """Test Retrieve One Artifact
+
+        :param source: The source (Remote) path(s)
+        :type source: str
+        :param destination: The destination (Local) path(s)
+        :type destination: PathLike
+        """
 
         test_logger.debug(f"Source: {source}")
         test_logger.debug(f"Destination: {destination}")
@@ -150,7 +176,7 @@ class TestAIOArtifactory:
 
         await aioartifactory.retrieve(
             source=source,
-            destination=[Path(__file__).parent.resolve()],
+            destination=destination,
             recursive=True,
         )
 

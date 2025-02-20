@@ -17,7 +17,7 @@ CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 
 # Configure logger
 tealogger.configure(
-    configuration=CURRENT_MODULE_PATH / "tealogger.json"
+    configuration=CURRENT_MODULE_PATH.parent / "tealogger.json"
 )
 logger = tealogger.get_logger("remotepath")
 
@@ -25,10 +25,7 @@ logger = tealogger.get_logger("remotepath")
 class RemotePath(PurePath):
     """Remote Path
 
-    :param path: The URL of the Remote Path
-    :type path: str
-    :param api_key: The Artifactory API Key
-    :type api_key: str, optional
+    The Remote Path class.
     """
 
     # NOTE: Backward compatibility for 3.11, remove in Python 3.12
@@ -41,7 +38,13 @@ class RemotePath(PurePath):
         *args,
         **kwargs
     ):
-        """Create Constructor"""
+        """Create Constructor
+
+        :param path: The URL of the Remote Path
+        :type path: str
+        :param api_key: The Artifactory API Key
+        :type api_key: str, optional
+        """
         return super().__new__(cls, path, *args, **kwargs)
 
     def __init__(
@@ -88,7 +91,6 @@ class RemotePath(PurePath):
     @property
     def repository(self) -> str:
         """Repository"""
-
         return unquote(PurePath(self._parse_url.path).parts[2])
 
     @property
