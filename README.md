@@ -7,6 +7,7 @@ Python Asynchronous Input Output (AIO) Artifactory
 * [Glossary](#glossary)
 * [Reference](#reference)
     * [Artifactory](#artifactory)
+    * [Visual Studio Code](#visual-studio-code)
 
 ## Glossary
 
@@ -42,8 +43,13 @@ https://artifactory.acme.com/artifactory/repository/path/subpath/
 ## Reference
 
 ### Artifactory
+
 * [Artifactory Query Language](https://jfrog.com/help/r/jfrog-artifactory-documentation/artifactory-query-language)
     * [Artifactory AQL Entity and Field](https://jfrog.com/help/r/jfrog-artifactory-documentation/aql-entities-and-fields)
 * [Artifactory REST APIs](https://jfrog.com/help/r/jfrog-rest-apis/artifactory-rest-apis)
     * [Artifactory REST APIs SEARCHES](https://jfrog.com/help/r/jfrog-rest-apis/searches)
         * [Artifactory Maximum Number of Search Queries](https://jfrog.com/help/r/maximum-number-of-search-queries/maximum-number-of-search-queries.)
+
+### Visual Studio Code
+
+* [pytest configuration settings](https://code.visualstudio.com/docs/python/testing#_pytest-configuration-settings)
