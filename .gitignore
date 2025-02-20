@@ -2,13 +2,15 @@
 # General #
 ###########
 
-aioartifactory/test/data.json
-aioartifactory/test/test_aioartifactory.json
+test/data.json
+test/test_aioartifactory.json
 
 # Ruff
 .ruff_cache/
 
 # Test
+_test/
+in/
 out/
 junit-report.xml
 
