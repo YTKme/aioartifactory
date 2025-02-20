@@ -9,6 +9,7 @@
         "--line-length",
         "80"
     ],
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
     "python.testing.pytestArgs": [
         "--showlocals",
         "--capture=tee-sys",
