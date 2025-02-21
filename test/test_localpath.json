@@ -12,10 +12,14 @@
                 }
             },
             "test_get_file_list": {
-                "strategy": "auto",
+                "strategy": "product",
                 "data": {
                     "path": [
-                        "."
+                        "./_test/localpath/"
+                    ],
+                    "file": [
+                        "alpha.txt",
+                        "beta.txt"
                     ]
                 }
             }

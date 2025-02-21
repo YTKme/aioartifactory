@@ -11,6 +11,7 @@ import platform
 from itertools import product
 from pathlib import Path
 import shutil
+import time
 
 import pytest
 from pytest import (
@@ -28,6 +29,17 @@ import tealogger
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 CURRENT_WORKING_DIRECTORY = Path().cwd()
 TEST_DATA_DIRECTORY = CURRENT_WORKING_DIRECTORY / "_test"
+
+##############
+# Local Path #
+##############
+
+LOCAL_PATH_FILE_LIST = [
+    "localpath/alpha.txt",
+    "localpath/beta.txt",
+    "localpath/subalpha/gamma.txt",
+    "localpath/subalpha/delta.txt"
+]
 
 # Configure conftest_logger
 tealogger.configure(
@@ -63,30 +75,16 @@ def pytest_configure(config: Config) -> None:
     conftest_logger.info("pytest Configure")
     conftest_logger.debug(f"Config: {config}")
 
-    # # Create the test data directory
-    # conftest_logger.debug(f"Create Test Data Directory: {TEST_DATA_DIRECTORY}")
-    # if not TEST_DATA_DIRECTORY.exists():
-    #     try:
-    #         TEST_DATA_DIRECTORY.mkdir(parents=True, exist_ok=True)
+    # Create the test data directory
+    conftest_logger.debug(f"Create Test Data Directory: {TEST_DATA_DIRECTORY}")
+    try:
+        TEST_DATA_DIRECTORY.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        conftest_logger.error(f"Operating System Error: {e}")
+    conftest_logger.debug(f"Create Test Data Directory Success")
 
-    #         # Local Path
-    #         local_path = TEST_DATA_DIRECTORY / "localpath"
-    #         local_subpath = local_path / "subpath"
-    #         local_path.mkdir(parents=True, exist_ok=True)
-    #         (local_path / "alpha.txt").touch(exist_ok=True)
-    #         (local_path / "beta.txt").touch(exist_ok=True)
-    #         local_subpath.mkdir(parents=True, exist_ok=True)
-    #         (local_subpath / "gamma.txt").touch(exist_ok=True)
-    #         (local_subpath / "delta.txt").touch(exist_ok=True)
-
-    #     except OSError as e:
-    #         conftest_logger.error(f"Operating System Error: {e}")
-    # conftest_logger.debug(f"Create Test Data Directory Success")
-
-    ##############
-    # Local Path #
-    ##############
     # Create the local path test data
+    setup_localpath()
 
 
 def pytest_sessionstart(session: Session) -> None:
@@ -293,6 +291,9 @@ def pytest_unconfigure(config: Config):
     conftest_logger.info("pytest Unconfigure")
     conftest_logger.debug(f"Config: {config}")
 
+    # Remove the local path test data
+    teardown_localpath()
+
     # Remove the test data directory
     conftest_logger.debug(f"Remove Test Data Directory: {TEST_DATA_DIRECTORY}")
     if TEST_DATA_DIRECTORY.exists():
@@ -313,3 +314,46 @@ def function_logger():
 def class_logger():
     """Class Logger"""
     pass
+
+
+def setup_localpath():
+    """Setup Local Path"""
+    conftest_logger.info("Setup Local Path")
+
+    try:
+        for file in LOCAL_PATH_FILE_LIST:
+            file_path = TEST_DATA_DIRECTORY / file
+            conftest_logger.debug(f"Create File: {file_path}")
+            if file_path.is_dir():
+                file_path.mkdir(parents=True, exist_ok=True)
+            else:
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                file_path.touch()
+    except OSError as e:
+        conftest_logger.error(f"Operating System Error: {e}")
+
+
+def teardown_localpath():
+    """Teardown Local Path"""
+    conftest_logger.info("Teardown Local Path")
+
+    try:
+        for file in LOCAL_PATH_FILE_LIST:
+            file_path = TEST_DATA_DIRECTORY / file
+            conftest_logger.debug(f"Remove File: {file_path}")
+            if file_path.is_dir():
+                shutil.rmtree(file_path, ignore_errors=True)
+            else:
+                file_path.unlink()
+
+        parent_path = set()
+        for file in LOCAL_PATH_FILE_LIST:
+            directory_path = (TEST_DATA_DIRECTORY / file).parent
+            parent_path.add(directory_path)
+
+        for path in parent_path:
+            conftest_logger.debug(f"Remove Directory: {path}")
+            shutil.rmtree(path, ignore_errors=True)
+
+    except OSError as e:
+        conftest_logger.error(f"Operating System Error: {e}")

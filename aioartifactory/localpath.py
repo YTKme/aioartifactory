@@ -66,14 +66,12 @@ class LocalPath(PurePath):
         Get the list of files in the Local Path.
         """
         stack = [Path(self._path).expanduser().resolve()]
-        logger.debug(f"Stack: {stack}")
 
         while stack:
             current_path = stack.pop()
             try:
                 with os.scandir(current_path) as entry_list:
                     for entry in entry_list:
-                        logger.debug(f"Entry: {entry}")
                         if entry.is_file():
                             yield Path(entry.path).expanduser().resolve()
                         elif entry.is_dir() and recursive:

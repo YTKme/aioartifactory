@@ -36,11 +36,23 @@ class TestLocalPath:
 
         assert isinstance(local_path, PurePath)
 
-    def test_get_file_list(self, path: str):
+    def test_get_file_list(
+        self,
+        path: str,
+        file: str
+    ):
         """Test Get File List"""
+
+        test_logger.debug(f"Path: {path}")
+        test_logger.debug(f"File: {file}")
 
         local_path = LocalPath(path=path)
 
-        file_list = local_path.get_file_list()
+        file_list = list(local_path.get_file_list())
+        test_logger.debug(f"File List: {file_list}")
 
-        test_logger.debug(f"File List: {list(file_list)}")
+        assert (
+            Path(f"{path}/{file}").expanduser().resolve()
+            in list(file_list)
+        )
+
