@@ -4,10 +4,100 @@ Python Asynchronous Input Output (AIO) Artifactory
 
 ## Table of Content
 
+* [JFrog Command Line Interface (CLI) Example](#jfrog-command-line-interface-cli-example)
+    * [Deploy One File](#deploy-one-file)
+        * [Command](#command)
+        * [Output](#output)
+        * [Result](#result)
+    * [Retrieve One File](#retrieve-one-file)
+        * [Command](#command-1)
+        * [Output](#output-1)
+        * [Result](#result-1)
 * [Glossary](#glossary)
 * [Reference](#reference)
     * [Artifactory](#artifactory)
     * [Visual Studio Code](#visual-studio-code)
+
+## JFrog Command Line Interface (CLI) Example
+
+### Deploy One File
+
+#### Command
+
+```bash
+# Short
+jf rt u /root/folder/subfolder/file.ext generic-repository[-local]/
+
+# Long
+jfrog rt upload /root/folder/subfolder/file.ext generic-repository[-local]/
+```
+
+#### Output
+
+```text
+15:54:51 [🔵Info] Log path: /Users/user/.jfrog/logs/jfrog-cli.2025-02-21.15-54-51.52108.log
+15:54:51 [🔵Info] These files were uploaded:
+
+📦 generic-repository[-local]
+└── 📁 root
+    └── 📁 folder
+        └── 📁 subfolder
+            └── 📄 file.ext
+
+
+{
+  "status": "success",
+  "totals": {
+    "success": 1,
+    "failure": 0
+  }
+}
+```
+
+#### Result
+
+```text
+generic-repository[-local]/
+│
+└── root/
+    └── folder/
+        └── subfolder/
+            └── file.ext
+```
+
+### Retrieve One File
+
+#### Command
+
+```bash
+# Short
+jf rt dl generic-repository[-local]/folder/subfolder/file.ext
+
+# Long
+jfrog rt download generic-repository[-local]/folder/subfolder/file.ext
+```
+
+#### Output
+
+```text
+15:43:59 [🔵Info] Log path: /Users/user/.jfrog/logs/jfrog-cli.2025-02-21.15-43-59.51631.log
+{
+  "status": "success",
+  "totals": {
+    "success": 1,
+    "failure": 0
+  }
+}
+```
+
+#### Result
+
+```text
+folder/
+│
+└── subfolder/
+    └── file.ext
+```
 
 ## Glossary
 
