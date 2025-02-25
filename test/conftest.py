@@ -30,15 +30,14 @@ CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 CURRENT_WORKING_DIRECTORY = Path().cwd()
 TEST_DATA_DIRECTORY = CURRENT_WORKING_DIRECTORY / "_test"
 
-##############
-# Local Path #
-##############
-
-LOCAL_PATH_FILE_LIST = [
+TEST_FILE_LIST = [
+    "aioartifactory/alpha.txt",
+    "aioartifactory/folder/beta.txt",
+    "aioartifactory/folder/subfolder/gamma.txt",
     "localpath/alpha.txt",
     "localpath/beta.txt",
-    "localpath/subalpha/gamma.txt",
-    "localpath/subalpha/delta.txt"
+    "localpath/folder/gamma.txt",
+    "localpath/folder/delta.txt",
 ]
 
 # Configure conftest_logger
@@ -83,8 +82,8 @@ def pytest_configure(config: Config) -> None:
         conftest_logger.error(f"Operating System Error: {e}")
     conftest_logger.debug(f"Create Test Data Directory Success")
 
-    # Create the local path test data
-    setup_localpath()
+    # Create the test file data
+    setup_test_file()
 
 
 def pytest_sessionstart(session: Session) -> None:
@@ -291,8 +290,8 @@ def pytest_unconfigure(config: Config):
     conftest_logger.info("pytest Unconfigure")
     conftest_logger.debug(f"Config: {config}")
 
-    # Remove the local path test data
-    teardown_localpath()
+    # Remove the test file data
+    teardown_test_file()
 
     # Remove the test data directory
     conftest_logger.debug(f"Remove Test Data Directory: {TEST_DATA_DIRECTORY}")
@@ -316,13 +315,13 @@ def class_logger():
     pass
 
 
-def setup_localpath():
-    """Setup Local Path"""
+def setup_test_file():
+    """Setup Test File"""
     conftest_logger.info("Setup Local Path")
 
     try:
-        for file in LOCAL_PATH_FILE_LIST:
-            file_path = TEST_DATA_DIRECTORY / file
+        for test_file in TEST_FILE_LIST:
+            file_path = TEST_DATA_DIRECTORY / test_file
             conftest_logger.debug(f"Create File: {file_path}")
             if file_path.is_dir():
                 file_path.mkdir(parents=True, exist_ok=True)
@@ -333,13 +332,13 @@ def setup_localpath():
         conftest_logger.error(f"Operating System Error: {e}")
 
 
-def teardown_localpath():
-    """Teardown Local Path"""
+def teardown_test_file():
+    """Teardown Test File"""
     conftest_logger.info("Teardown Local Path")
 
     try:
-        for file in LOCAL_PATH_FILE_LIST:
-            file_path = TEST_DATA_DIRECTORY / file
+        for test_file in TEST_FILE_LIST:
+            file_path = TEST_DATA_DIRECTORY / test_file
             conftest_logger.debug(f"Remove File: {file_path}")
             if file_path.is_dir():
                 shutil.rmtree(file_path, ignore_errors=True)
@@ -347,8 +346,8 @@ def teardown_localpath():
                 file_path.unlink()
 
         parent_path = set()
-        for file in LOCAL_PATH_FILE_LIST:
-            directory_path = (TEST_DATA_DIRECTORY / file).parent
+        for test_file in TEST_FILE_LIST:
+            directory_path = (TEST_DATA_DIRECTORY / test_file).parent
             parent_path.add(directory_path)
 
         for path in parent_path:

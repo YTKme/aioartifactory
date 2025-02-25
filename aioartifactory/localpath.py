@@ -21,7 +21,7 @@ tealogger.configure(
 logger = tealogger.get_logger("localpath")
 
 
-class LocalPath(PurePath):
+class LocalPath(Path):
     """Local Path
 
     The Local Path class.
@@ -32,7 +32,7 @@ class LocalPath(PurePath):
 
     def __new__(
         cls,
-        path: str,
+        path: PathLike,
         *args,
         **kwargs
     ):
@@ -64,21 +64,41 @@ class LocalPath(PurePath):
         """Get File List
 
         Get the list of files in the Local Path.
-        """
-        stack = [Path(self._path).expanduser().resolve()]
 
-        while stack:
-            current_path = stack.pop()
-            try:
-                with os.scandir(current_path) as entry_list:
-                    for entry in entry_list:
-                        if entry.is_file():
-                            yield Path(entry.path).expanduser().resolve()
-                        elif entry.is_dir() and recursive:
-                            stack.append(entry.path)
-            except PermissionError:
-                logger.warning(f"Permission Denied: {current_path}")
-            except FileNotFoundError:
-                logger.warning(f"File Not Found: {current_path}")
-            except OSError as error:
-                logger.error(f"Error: {error}")
+        :param recursive: Whether to recursively search for file(s),
+            defaults to False
+        :type recursive: bool, optional
+
+        :return: The list of file(s) in the Local Path
+        :rtype: Generator[PathLike, None, None]
+        """
+        path = Path(self._path).expanduser().resolve()
+
+        if not path.exists():
+            logger.error(f"File Not Found: {path}")
+            raise FileNotFoundError(f"File Not Found: {path}")
+
+        if path.is_dir():
+            # Directory
+            stack = [path]
+            while stack:
+                current_path = stack.pop()
+                try:
+                    with os.scandir(current_path) as entry_list:
+                        for entry in entry_list:
+                            if entry.is_file():
+                                yield Path(entry.path).expanduser().resolve()
+                            elif entry.is_dir() and recursive:
+                                stack.append(entry.path)
+                except PermissionError:
+                    logger.error(f"Permission Denied: {current_path}")
+                # except FileNotFoundError:
+                #     logger.error(f"File Not Found: {current_path}")
+                # except OSError as error:
+                #     logger.error(f"Error: {error}")
+        elif path.is_file():
+            # File
+            yield path
+        else:
+            logger.error(f"Neither File Nor Directory: {path}")
+            raise ValueError(f"Neither File Nor Directory: {path}")

@@ -117,10 +117,20 @@ class AIOArtifactory:
                 timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
             )
 
+        async with client_session as session:
+            return await self._deploy(
+                source_list=source,
+                destination_list=destination,
+                upload_queue=upload_queue,
+                session=session,
+                recursive=recursive,
+                quiet=quiet,
+            )
+
     async def _deploy(
         self,
-        source_list: list[PathLike],
-        destination_list: list[str],
+        source_list: list[LocalPath],
+        destination_list: list[RemotePath],
         upload_queue: Queue,
         session: ClientSession,
         recursive: bool,
@@ -151,6 +161,44 @@ class AIOArtifactory:
                 ) for _ in range(connection_count)
             ]
 
+            # Enqueue the `source` to the `source_queue`
+            for source in source_list:
+                await source_queue.put(source)
+
+            # Enqueue the `destination` to the `destination_queue`
+            # for destination in destination_list:
+            #     await destination_queue.put(destination)
+
+            # Enqueue a `None` signal for worker(s) to exit
+            for _ in range(connection_count):
+                await source_queue.put(None)
+
+        upload_list = []
+
+        # Upload
+        async with TaskGroup() as group:
+            # Optimize maximum connection
+            connection_count = min(upload_queue.qsize(), DEFAULT_MAXIMUM_CONNECTION)
+
+            # Create `connection_count` of `_upload_query` worker task(s)
+            # Store them in a `task_list`
+            for count in range(connection_count):
+                group.create_task(
+                    self._upload_task(
+                        destination_list=destination_list,
+                        upload_queue=upload_queue,
+                        upload_list=upload_list,
+                        session=session,
+                    )
+                )
+
+            # Enqueue a `None` signal for worker(s) to exit
+            for _ in range(connection_count):
+                await upload_queue.put(None)
+
+        # logger.debug(f"Upload List: {upload_list}")
+        return upload_list
+
     async def _deploy_task(
         self,
         source_queue: Queue,
@@ -178,11 +226,62 @@ class AIOArtifactory:
             logger.debug(f"Source: {source}, Type: {type(source)}")
 
             # Enqueue the deploy query response
-            local_path = Path(source).expanduser().resolve()
+            local_path = LocalPath(path=source)
             logger.debug(f"Local Path: {local_path}")
 
-            # Enqueue the upload queue
-            await upload_queue.put(local_path)
+            for file in local_path.get_file_list(recursive=recursive):
+                logger.debug(f"Local File: {file}")
+                # Enqueue the upload queue
+                await upload_queue.put(local_path)
+
+    async def _upload_task(
+        self,
+        destination_list: list[RemotePath],
+        upload_queue: Queue,
+        upload_list: list[str],
+        session: ClientSession,
+    ) -> None:
+        """Upload Task
+
+        :param destination_list: The destination list
+        :type destination_list: list[RemotePath]
+        :param upload_queue: The upload queue
+        :type upload_queue: Queue
+        :param upload_list: The upload list store what is uploaded
+        :type upload_list: list[str]
+        :param session: The current session
+        :type session: ClientSession
+        """
+
+        while True:
+            upload = await upload_queue.get()
+
+            # The signal to exit (check at the beginning)
+            if upload is None:
+                break
+
+            logger.debug(f"Upload: {upload}, Type: {type(upload)}")
+            logger.debug(f"Destination List: {destination_list}")
+
+            local_path = LocalPath(path=upload)
+            logger.debug(f"Local Path: {local_path}")
+
+            # Upload the file
+            logger.debug(f"Uploading: {upload}")
+
+            with open(local_path, "rb") as file:
+                for destination in destination_list:
+                    logger.debug(f"Destination: {destination}")
+                    async with session.put(
+                        url=str(destination),
+                        headers=self._header,
+                        data=file,
+                    ) as response:
+                        logger.debug(f"Response: {response}")
+
+            upload_list.append(upload)
+
+            logger.info(f"Completed: {upload}")
 
     # --------
     # Retrieve
@@ -235,6 +334,7 @@ class AIOArtifactory:
                 download_queue=download_queue,
                 session=session,
                 recursive=recursive,
+                output_repository=output_repository,
                 quiet=quiet,
             )
 
@@ -245,6 +345,7 @@ class AIOArtifactory:
         download_queue: Queue,
         session: ClientSession,
         recursive: bool,
+        output_repository: bool,
         quiet: bool,
     ) -> list[str]:
         """Retrieve"""
@@ -299,6 +400,7 @@ class AIOArtifactory:
                         download_queue=download_queue,
                         download_list=download_list,
                         session=session,
+                        output_repository=output_repository,
                     )
                 )
 
@@ -341,7 +443,7 @@ class AIOArtifactory:
             async for file in remote_path.get_file_list(recursive=recursive):
                 # Get partition before the last `/`
                 before, _, _ = str(source).rpartition("/")
-                logger.debug(f"Source File: {before}{file}")
+                logger.debug(f"Remote File: {before}{file}")
                 await download_queue.put(f"{before}{file}")
 
     async def _download_task(
@@ -350,6 +452,7 @@ class AIOArtifactory:
         download_queue: Queue,
         download_list: list[str],
         session: ClientSession,
+        output_repository: bool,
     ) -> None:
         """Download Task
 
@@ -361,6 +464,9 @@ class AIOArtifactory:
         :type download_list: list[str]
         :param session: The current session
         :type session: ClientSession
+        :param output_repository: Whether to include the repository name
+            in the destination path
+        :type output_repository: bool
         """
         while True:
             download = await download_queue.get()
@@ -376,10 +482,21 @@ class AIOArtifactory:
             # Download the file
             logger.debug(f"Downloading: {download}")
 
-            async with session.get(url=str(remote_path), headers=self._header) as response:
+            async with session.get(
+                url=str(remote_path),
+                headers=self._header,
+            ) as response:
                 for destination in destination_list:
+                    location = LocalPath(path=remote_path.location)
+                    output_repository = True
+                    if output_repository:
+                        location = LocalPath(
+                            f"{remote_path.repository}/{location}"
+                        )
+                    # logger.debug(f"Location: {location}")
+
                     destination_path = Path(
-                        destination / remote_path.location
+                        destination / location
                     ).expanduser().resolve()
                     try:
                         destination_path.parent.mkdir(parents=True, exist_ok=True)
