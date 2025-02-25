@@ -98,11 +98,12 @@ class RemotePath(PurePath):
         """Location
 
         The `location` is defined as the `path` component of the
-        `urlparse` function, without the `/artifactory` prefix `part`.
+        `urlparse` function, without the `/artifactory/<repository>`
+        prefix `part`.
         See `urllib.parse.urlparse <https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse>`_.
         """
         return PurePath(unquote(
-            "/".join(PurePath(self._parse_url.path).parts[2:])
+            "/".join(PurePath(self._parse_url.path).parts[3:])
         ))
 
     @property
