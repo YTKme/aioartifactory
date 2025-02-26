@@ -83,17 +83,17 @@ class AIOArtifactory:
 
     async def deploy(
         self,
-        source: LocalPath | list[LocalPath],
-        destination: RemotePath | list[RemotePath],
+        source: str | list[str] | LocalPath | list[LocalPath],
+        destination: str | list[str] | RemotePath | list[RemotePath],
         recursive: bool = False,
         quiet: bool = False,
     ):
         """Deploy
 
         :param source: The source (Local) path(s)
-        :type source: LocalPath | list[LocalPath]
+        :type source: str | list[str] | LocalPath | list[LocalPath]
         :param destination: The destination (Remote) path(s)
-        :type destination: RemotePath | list[RemotePath]
+        :type destination: str | list[str] | RemotePath | list[RemotePath]
         :param recursive: Whether to recursively deploy artifact(s)
         :type recursive: bool, optional
         :param quiet: Whether to show deploy progress
@@ -104,9 +104,9 @@ class AIOArtifactory:
         upload_queue = Queue()
 
         # TODO: Convert one to many...for now
-        if isinstance(source, str):
+        if not isinstance(source, list):
             source = [source]
-        if isinstance(destination, str):
+        if not isinstance(destination, list):
             destination = [destination]
 
         if self._client_session:
@@ -129,8 +129,8 @@ class AIOArtifactory:
 
     async def _deploy(
         self,
-        source_list: list[LocalPath],
-        destination_list: list[RemotePath],
+        source_list: list[str] | list[LocalPath],
+        destination_list: list[str] | list[RemotePath],
         upload_queue: Queue,
         session: ClientSession,
         recursive: bool,
@@ -236,7 +236,7 @@ class AIOArtifactory:
 
     async def _upload_task(
         self,
-        destination_list: list[RemotePath],
+        destination_list: list[str] | list[RemotePath],
         upload_queue: Queue,
         upload_list: list[str],
         session: ClientSession,
@@ -244,7 +244,7 @@ class AIOArtifactory:
         """Upload Task
 
         :param destination_list: The destination list
-        :type destination_list: list[RemotePath]
+        :type destination_list: list[str] | list[RemotePath]
         :param upload_queue: The upload queue
         :type upload_queue: Queue
         :param upload_list: The upload list store what is uploaded
@@ -271,13 +271,19 @@ class AIOArtifactory:
 
             with open(local_path, "rb") as file:
                 for destination in destination_list:
+                    remote_path = RemotePath(
+                        path=f"{destination}/{local_path.name}"
+                    )
                     logger.debug(f"Destination: {destination}")
                     async with session.put(
-                        url=str(destination),
+                        url=str(remote_path),
                         headers=self._header,
                         data=file,
                     ) as response:
-                        logger.debug(f"Response: {response}")
+                        # logger.debug(f"Response: {response}")
+                        if response.status != 201:
+                            logger.error(f"Upload Failed: {remote_path}")
+                            raise RuntimeError(f"Upload Failed: {remote_path}")
 
             upload_list.append(upload)
 
@@ -314,9 +320,9 @@ class AIOArtifactory:
         download_queue = Queue()
 
         # TODO: Convert one to many...for now
-        if isinstance(source, str):
+        if not isinstance(source, list):
             source = [source]
-        if isinstance(destination, str):
+        if not isinstance(destination, list):
             destination = [destination]
 
         if self._client_session:
@@ -508,6 +514,10 @@ class AIOArtifactory:
             download_list.append(download)
 
             logger.info(f"Completed: {download}")
+
+    # ----------------------------
+    # Asynchronous Context Manager
+    # ----------------------------
 
     async def __aenter__(self):
         """Asynchronous Enter
