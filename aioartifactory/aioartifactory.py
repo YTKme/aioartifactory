@@ -488,12 +488,10 @@ class AIOArtifactory:
             ) as response:
                 for destination in destination_list:
                     location = LocalPath(path=remote_path.location)
-                    output_repository = True
                     if output_repository:
                         location = LocalPath(
                             f"{remote_path.repository}/{location}"
                         )
-                    # logger.debug(f"Location: {location}")
 
                     destination_path = Path(
                         destination / location

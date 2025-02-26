@@ -14,6 +14,7 @@ import tealogger
 
 
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
+SEPARATOR = "/"
 
 # Configure logger
 tealogger.configure(
@@ -103,7 +104,7 @@ class RemotePath(PurePath):
         See `urllib.parse.urlparse <https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse>`_.
         """
         return PurePath(unquote(
-            "/".join(PurePath(self._parse_url.path).parts[3:])
+            SEPARATOR.join(PurePath(self._parse_url.path).parts[3:])
         ))
 
     @property
@@ -140,11 +141,11 @@ class RemotePath(PurePath):
         return PurePath(
             "//",
             # Network Location and Path
-            "/".join([
+            SEPARATOR.join([
                 self._parse_url.netloc,
-                *self._parse_url.path.split("/")[:2],
+                *self._parse_url.path.split(SEPARATOR)[:2],
                 "api/storage",
-                *self._parse_url.path.split("/")[2:],
+                *self._parse_url.path.split(SEPARATOR)[2:],
             ]),
         )
 
@@ -195,8 +196,8 @@ class RemotePath(PurePath):
             ) as response:
                 if response.status == 400:
                     # NOTE: Need `and "Expected a folder" in await response.text()`?
-                    _, separator, after = str(self.location).rpartition("/")
-                    yield separator + after
+                    _, _, after = str(self.location).rpartition(SEPARATOR)
+                    yield SEPARATOR + after
                     # Need to `return` to terminate
                     return
 
