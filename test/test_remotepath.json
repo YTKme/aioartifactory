@@ -43,8 +43,8 @@
                         "https://artifactory.acme.com/artifactory/repository/path/subpath/file.ext"
                     ],
                     "location": [
-                        "repository/path",
-                        "repository/path/subpath/file.ext"
+                        "path",
+                        "path/subpath/file.ext"
                     ]
                 }
             },
