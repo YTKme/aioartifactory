@@ -291,16 +291,16 @@ def pytest_unconfigure(config: Config):
     conftest_logger.debug(f"Config: {config}")
 
     # Remove the test file data
-    teardown_test_file()
+    # teardown_test_file()
 
     # Remove the test data directory
-    conftest_logger.debug(f"Remove Test Data Directory: {TEST_DATA_DIRECTORY}")
-    if TEST_DATA_DIRECTORY.exists():
-        try:
-            shutil.rmtree(TEST_DATA_DIRECTORY)
-        except OSError as e:
-            conftest_logger.error(f"Operating System Error: {e}")
-    conftest_logger.debug(f"Remove Test Data Directory Success")
+    # conftest_logger.debug(f"Remove Test Data Directory: {TEST_DATA_DIRECTORY}")
+    # if TEST_DATA_DIRECTORY.exists():
+    #     try:
+    #         shutil.rmtree(TEST_DATA_DIRECTORY)
+    #     except OSError as e:
+    #         conftest_logger.error(f"Operating System Error: {e}")
+    # conftest_logger.debug(f"Remove Test Data Directory Success")
 
 
 @pytest.fixture(scope="function")

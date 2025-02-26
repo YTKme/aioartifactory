@@ -5,7 +5,7 @@ Test Asynchronous Input Output (AIO) Artifactory
 
 import os
 from os import PathLike
-from pathlib import Path
+from pathlib import Path, PurePath
 from urllib.parse import urlparse
 
 import pytest
@@ -60,14 +60,14 @@ class TestAIOArtifactory:
         )
 
     @pytest.mark.asyncio
-    async def test_retrieve_one_source(
+    async def test_retrieve_one_source_simple(
         self,
         source: str,
         destination: PathLike,
     ):
-        """Test Retrieve One Source
+        """Test Retrieve One Source Simple
 
-        Test retrieve of one source to one destination.
+        Test simple retrieve of one source to one destination.
 
         :param source: The source (Remote) path(s)
         :type source: str
@@ -86,7 +86,7 @@ class TestAIOArtifactory:
         )
 
         for download in download_list:
-            path = urlparse(download).path.replace("/artifactory", "")
+            path = "/".join(PurePath(urlparse(download).path).parts[3:])
             full_path = Path("/".join([
                 str(CURRENT_WORK_PATH),
                 destination,
@@ -94,39 +94,39 @@ class TestAIOArtifactory:
             ]))
             assert full_path.exists()
 
-    # @pytest.mark.asyncio
-    # async def test_retrieve_one_source_recursive(
-    #     self,
-    #     source: str,
-    #     destination: PathLike,
-    # ):
-    #     """Test Retrieve One Source Recursive
+    @pytest.mark.asyncio
+    async def test_retrieve_one_source_recursive(
+        self,
+        source: str,
+        destination: PathLike,
+    ):
+        """Test Retrieve One Source Recursive
 
-    #     :param source: The source (Remote) path(s)
-    #     :type source: str
-    #     :param destination: The destination (Local) path(s)
-    #     :type destination: PathLike
-    #     """
+        :param source: The source (Remote) path(s)
+        :type source: str
+        :param destination: The destination (Local) path(s)
+        :type destination: PathLike
+        """
 
-    #     test_logger.debug(f"Source: {source}")
-    #     test_logger.debug(f"Destination: {destination}")
+        test_logger.debug(f"Source: {source}")
+        test_logger.debug(f"Destination: {destination}")
 
-    #     aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
-    #     download_list = await aioartifactory.retrieve(
-    #         source=source,
-    #         destination=destination,
-    #         recursive=True,
-    #     )
+        download_list = await aioartifactory.retrieve(
+            source=source,
+            destination=destination,
+            recursive=True,
+        )
 
-    #     for download in download_list:
-    #         path = urlparse(download).path.replace("/artifactory", "")
-    #         full_path = Path("/".join([
-    #             str(CURRENT_WORK_PATH),
-    #             destination,
-    #             path,
-    #         ]))
-    #         assert full_path.exists()
+        for download in download_list:
+            path = "/".join(PurePath(urlparse(download).path).parts[3:])
+            full_path = Path("/".join([
+                str(CURRENT_WORK_PATH),
+                destination,
+                path,
+            ]))
+            assert full_path.exists()
 
     @pytest.mark.asyncio
     async def test_retrieve_one_artifact(
@@ -153,7 +153,7 @@ class TestAIOArtifactory:
         )
 
         for download in download_list:
-            path = urlparse(download).path.replace("/artifactory", "")
+            path = "/".join(PurePath(urlparse(download).path).parts[3:])
             full_path = Path("/".join([
                 str(CURRENT_WORK_PATH),
                 destination,
@@ -162,12 +162,12 @@ class TestAIOArtifactory:
             assert full_path.exists()
 
     @pytest.mark.asyncio
-    async def test_retrieve_many(
+    async def test_retrieve_many_artifact(
         self,
         source: list[str],
         destination: list[PathLike],
     ):
-        """Test Retrieve Many"""
+        """Test Retrieve Many Artifact"""
 
         test_logger.debug(f"Source: {source}")
         test_logger.debug(f"Destination: {destination}")
