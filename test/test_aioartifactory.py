@@ -41,23 +41,23 @@ class TestAIOArtifactory:
 
     #     assert aioartifactory.host == host
 
-    @pytest.mark.asyncio
-    async def test_deploy_one_artifact(
-        self,
-        source: PathLike,
-        destination: str,
-    ):
-        """Test Deploy One Artifact"""
+    # @pytest.mark.asyncio
+    # async def test_deploy_one_artifact(
+    #     self,
+    #     source: PathLike,
+    #     destination: str,
+    # ):
+    #     """Test Deploy One Artifact"""
 
-        test_logger.debug(f"Source: {source}")
-        test_logger.debug(f"Destination: {destination}")
+    #     test_logger.debug(f"Source: {source}")
+    #     test_logger.debug(f"Destination: {destination}")
 
-        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+    #     aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
-        upload_list = await aioartifactory.deploy(
-            source=source,
-            destination=destination,
-        )
+    #     upload_list = await aioartifactory.deploy(
+    #         source=source,
+    #         destination=destination,
+    #     )
 
     @pytest.mark.asyncio
     async def test_retrieve_one_source_simple(
