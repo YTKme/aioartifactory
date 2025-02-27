@@ -4,6 +4,7 @@ Local Path
 """
 
 from collections.abc import Generator
+import hashlib
 import os
 from os import PathLike
 from pathlib import (_PosixFlavour, _WindowsFlavour, PurePath, Path)
@@ -56,6 +57,60 @@ class LocalPath(Path):
         super().__init__(*args)
 
         self._path = path
+
+    @property
+    def md5(self) -> str:
+        """MD5 Checksum
+
+        Get the MD5 checksum of the Local Path.
+
+        :return: The MD5 checksum of the Local Path
+        :rtype: str
+        """
+        if Path(self._path).is_dir():
+            logger.warning(f"Local Path is a Directory: {self._path}")
+            return None
+
+        with open(self._path, "rb") as file:
+            checksum = hashlib.md5(file.read()).hexdigest()
+
+        return checksum
+
+    @property
+    def sha1(self) -> str:
+        """SHA1 Checksum
+
+        Get the SHA1 checksum of the Local Path.
+
+        :return: The SHA1 checksum of the Local Path
+        :rtype: str
+        """
+        if Path(self._path).is_dir():
+            logger.warning(f"Local Path is a Directory: {self._path}")
+            return None
+
+        with open(self._path, "rb") as file:
+            checksum = hashlib.sha1(file.read()).hexdigest()
+
+        return checksum
+
+    @property
+    def sha256(self) -> str:
+        """SHA256 Checksum
+
+        Get the SHA256 checksum of the Local Path.
+
+        :return: The SHA256 checksum of the Local Path
+        :rtype: str
+        """
+        if Path(self._path).is_dir():
+            logger.warning(f"Local Path is a Directory: {self._path}")
+            return None
+
+        with open(self._path, "rb") as file:
+            checksum = hashlib.sha256(file.read()).hexdigest()
+
+        return checksum
 
     def get_file_list(
         self,
