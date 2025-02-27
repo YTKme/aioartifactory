@@ -111,6 +111,36 @@ class LocalPath(Path):
 
         return checksum
 
+    @property
+    def checksum(self) -> dict:
+        """Checksum
+
+        Get the checksum(s) of the Local Path in a dictionary.
+
+        Example:
+            {
+                "md5": "md5_checksum",
+                "sha1": "sha1_checksum",
+                "sha256": "sha256_checksum"
+            }
+
+        :return: The checksum(s) of the Local Path
+        :rtype: dict
+        """
+        if Path(self._path).is_dir():
+            logger.warning(f"Local Path is a Directory: {self._path}")
+            return None
+
+        with open(self._path, "rb") as file:
+            file_data = file.read()
+            checksum = {
+                "md5": hashlib.md5(file_data).hexdigest(),
+                "sha1": hashlib.sha1(file_data).hexdigest(),
+                "sha256": hashlib.sha256(file_data).hexdigest(),
+            }
+
+        return checksum
+
     def get_file_list(
         self,
         recursive: bool = False,
