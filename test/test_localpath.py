@@ -7,7 +7,6 @@ import hashlib
 import os
 from pathlib import (PurePath, Path)
 
-import pytest
 import tealogger
 
 from aioartifactory import LocalPath

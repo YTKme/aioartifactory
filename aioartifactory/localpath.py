@@ -7,8 +7,7 @@ from collections.abc import Generator
 import hashlib
 import os
 from os import PathLike
-from pathlib import (_PosixFlavour, _WindowsFlavour, PurePath, Path)
-from typing import Optional
+from pathlib import (_PosixFlavour, _WindowsFlavour, Path)
 
 import tealogger
 

@@ -11,7 +11,6 @@ import platform
 from itertools import product
 from pathlib import Path
 import shutil
-import time
 
 import pytest
 from pytest import (
@@ -80,7 +79,7 @@ def pytest_configure(config: Config) -> None:
         TEST_DATA_DIRECTORY.mkdir(parents=True, exist_ok=True)
     except OSError as e:
         conftest_logger.error(f"Operating System Error: {e}")
-    conftest_logger.debug(f"Create Test Data Directory Success")
+    conftest_logger.debug("Create Test Data Directory Success")
 
     # Create the test file data
     setup_test_file()

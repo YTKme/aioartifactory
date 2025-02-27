@@ -58,6 +58,7 @@ class TestAIOArtifactory:
             source=source,
             destination=destination,
         )
+        test_logger.debug(f"Upload List: {upload_list}")
 
     @pytest.mark.asyncio
     async def test_retrieve_one_source_simple(
