@@ -271,10 +271,20 @@ class AIOArtifactory:
 
             with open(local_path, "rb") as file:
                 for destination in destination_list:
+                    logger.debug(f"Destination: {destination}")
+
                     remote_path = RemotePath(
                         path=f"{destination}/{local_path.name}"
                     )
-                    logger.debug(f"Destination: {destination}")
+
+                    # Update header with checksum
+                    local_path_checksum = local_path.checksum
+                    self._header.update({
+                        "X-Checksum": local_path_checksum["md5"],
+                        "X-Checksum-Sha1": local_path_checksum["sha1"],
+                        "X-Checksum-Sha256": local_path_checksum["sha256"],
+                    })
+
                     async with session.put(
                         url=str(remote_path),
                         headers=self._header,
@@ -285,7 +295,8 @@ class AIOArtifactory:
                             logger.error(f"Upload Failed: {remote_path}")
                             raise RuntimeError(f"Upload Failed: {remote_path}")
 
-            upload_list.append(upload)
+                        data = await response.json()
+                        upload_list.append(data["downloadUri"])
 
             logger.info(f"Completed: {upload}")
 

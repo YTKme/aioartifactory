@@ -84,6 +84,38 @@ class TestLocalPath:
 
         assert local_path.sha1 == checksum
 
+    def test_checksum(self, path: str):
+        """Test Checksum"""
+
+        test_logger.debug(f"Path: {path}")
+
+        local_path = LocalPath(path=path)
+        test_logger.debug(f"Local Path Checksum: {local_path.checksum}")
+
+        try:
+            with open(Path(path), "rb") as file:
+                file_data = file.read()
+                checksum = {
+                    "md5": hashlib.md5(file_data).hexdigest(),
+                    "sha1": hashlib.sha1(file_data).hexdigest(),
+                    "sha256": hashlib.sha256(file_data).hexdigest(),
+                }
+
+            assert isinstance(local_path.checksum, dict)
+            assert isinstance(local_path.checksum["md5"], str)
+            assert isinstance(local_path.checksum["sha1"], str)
+            assert isinstance(local_path.checksum["sha256"], str)
+
+        except IsADirectoryError as error:
+            test_logger.warning(f"Local Path is a Directory: {path}")
+            test_logger.error(f"Error: {error}")
+            checksum = None
+
+        test_logger.debug(f"Local Path Checksum: {local_path.checksum}")
+        test_logger.debug(f"Checksum: {checksum}")
+
+        assert local_path.checksum == checksum
+
     def test_sha256(self, path: str):
         """Test SHA256"""
 

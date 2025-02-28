@@ -172,6 +172,23 @@ class RemotePath(PurePath):
             f"{parse_url_tail}"
         )
 
+    async def exist(self) -> bool:
+        """Exist
+
+        Check if the Remote Path exist.
+
+        :return: Whether the Remote Path exist
+        :rtype: bool
+        """
+        storage_api_url = self._get_storage_api_url()
+
+        async with ClientSession() as session:
+            async with session.get(
+                url=storage_api_url,
+                headers=self._header,
+            ) as response:
+                return response.status == 200
+
     async def get_file_list(
         self,
         recursive: bool = False,

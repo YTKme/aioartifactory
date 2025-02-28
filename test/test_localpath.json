@@ -47,6 +47,18 @@
                     ]
                 }
             },
+            "test_checksum": {
+                "strategy": "auto",
+                "data": {
+                    "path": [
+                        "./_test/localpath/alpha.txt",
+                        "./_test/localpath/beta.txt",
+                        "./_test/localpath/folder/",
+                        "./_test/localpath/folder/gamma.txt",
+                        "./_test/localpath/folder/delta.txt"
+                    ]
+                }
+            },
             "test_get_file_list": {
                 "strategy": "product",
                 "data": {

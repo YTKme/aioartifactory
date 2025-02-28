@@ -4,6 +4,7 @@
 
 test/data.json
 test/test_aioartifactory.json
+test/test_remotepath.json
 
 # Ruff
 .ruff_cache/

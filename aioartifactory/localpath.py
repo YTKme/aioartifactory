@@ -4,6 +4,7 @@ Local Path
 """
 
 from collections.abc import Generator
+from functools import lru_cache
 import hashlib
 import os
 from os import PathLike
@@ -58,6 +59,7 @@ class LocalPath(Path):
         self._path = path
 
     @property
+    @lru_cache(maxsize=3)
     def md5(self) -> str:
         """MD5 Checksum
 
@@ -76,6 +78,7 @@ class LocalPath(Path):
         return checksum
 
     @property
+    @lru_cache(maxsize=3)
     def sha1(self) -> str:
         """SHA1 Checksum
 
@@ -94,6 +97,7 @@ class LocalPath(Path):
         return checksum
 
     @property
+    @lru_cache(maxsize=3)
     def sha256(self) -> str:
         """SHA256 Checksum
 
@@ -108,6 +112,37 @@ class LocalPath(Path):
 
         with open(self._path, "rb") as file:
             checksum = hashlib.sha256(file.read()).hexdigest()
+
+        return checksum
+
+    @property
+    @lru_cache(maxsize=9)
+    def checksum(self) -> dict:
+        """Checksum
+
+        Get the checksum(s) of the Local Path in a dictionary.
+
+        Example:
+            {
+                "md5": "md5_checksum",
+                "sha1": "sha1_checksum",
+                "sha256": "sha256_checksum"
+            }
+
+        :return: The checksum(s) of the Local Path
+        :rtype: dict
+        """
+        if Path(self._path).is_dir():
+            logger.warning(f"Local Path is a Directory: {self._path}")
+            return None
+
+        with open(self._path, "rb") as file:
+            file_data = file.read()
+            checksum = {
+                "md5": hashlib.md5(file_data).hexdigest(),
+                "sha1": hashlib.sha1(file_data).hexdigest(),
+                "sha256": hashlib.sha256(file_data).hexdigest(),
+            }
 
         return checksum
 
