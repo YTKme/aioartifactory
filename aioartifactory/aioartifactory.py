@@ -225,14 +225,20 @@ class AIOArtifactory:
 
             logger.debug(f"Source: {source}, Type: {type(source)}")
 
-            # Enqueue the deploy query response
             local_path = LocalPath(path=source)
             logger.debug(f"Local Path: {local_path}")
 
-            for file in local_path.get_file_list(recursive=recursive):
-                logger.debug(f"Local File: {file}")
-                # Enqueue the upload queue
+            # Enqueue the deploy query response
+            # The `upload_queue` should be relative path
+            if local_path.is_file():
                 await upload_queue.put(local_path)
+            else:
+                for file in local_path.get_file_list(recursive=recursive):
+                    # logger.debug(f"Local File: {file}")
+                    relative_path = local_path / Path(file).name
+                    logger.debug(f"Relative Path: {relative_path}")
+                    # Enqueue the upload queue
+                    await upload_queue.put(relative_path)
 
     async def _upload_task(
         self,
@@ -260,7 +266,7 @@ class AIOArtifactory:
             if upload is None:
                 break
 
-            logger.debug(f"Upload: {upload}, Type: {type(upload)}")
+            logger.info(f"Upload: {upload}, Type: {type(upload)}")
             logger.debug(f"Destination List: {destination_list}")
 
             local_path = LocalPath(path=upload)
@@ -274,7 +280,7 @@ class AIOArtifactory:
                     logger.debug(f"Destination: {destination}")
 
                     remote_path = RemotePath(
-                        path=f"{destination}/{local_path.name}"
+                        path=f"{destination}/{local_path}"
                     )
 
                     # Update header with checksum
@@ -455,8 +461,9 @@ class AIOArtifactory:
             logger.debug(f"Source: {source}, Type: {type(source)}")
             logger.debug(f"Source Path: {urlparse(source).path}")
 
-            # Enqueue the retrieve query response
             remote_path = RemotePath(path=source, api_key=self._api_key)
+
+            # Enqueue the retrieve query response
             async for file in remote_path.get_file_list(recursive=recursive):
                 # Get partition before the last `/`
                 before, _, _ = str(source).rpartition("/")
