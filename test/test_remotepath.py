@@ -131,6 +131,25 @@ class TestRemotePath:
         assert parse_url.scheme == scheme
 
     @pytest.mark.asyncio
-    async def test_exist(self, path: str):
+    async def test_exist(self, path: str, expect: bool):
         """Test Exist"""
-        pass
+
+        test_logger.debug(f"Path: {path}")
+        test_logger.debug(f"Expect: {expect}")
+
+        remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
+
+        assert (await remote_path.exist()) == expect
+
+    @pytest.mark.asyncio
+    async def test_get_file_list(self, path: str):
+        """Test Get File List"""
+
+        remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
+
+        file_list = remote_path.get_file_list()
+        # test_logger.debug(f"File List: {file_list}, Type: {type(file_list)}")
+
+        # https://peps.python.org/pep-0525/
+        assert file_list.__aiter__() is file_list
+        assert (await file_list.__anext__()) is not None
