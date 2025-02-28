@@ -183,11 +183,16 @@ class RemotePath(PurePath):
         storage_api_url = self._get_storage_api_url()
 
         async with ClientSession() as session:
-            async with session.get(
-                url=storage_api_url,
-                headers=self._header,
-            ) as response:
-                return response.status == 200
+            try:
+                async with session.get(
+                    url=storage_api_url,
+                    headers=self._header,
+                ) as response:
+                    # logger.warning(f"Response: {await response.json()}")
+                    return response.status == 200
+            except OSError as error:
+                logger.error(f"Error: {error}")
+                return False
 
     async def get_file_list(
         self,
@@ -207,18 +212,22 @@ class RemotePath(PurePath):
         # logger.debug(f"Query: {query}")
 
         async with ClientSession() as session:
-            async with session.get(
-                url=f"{storage_api_url}?{query}",
-                headers=self._header,
-            ) as response:
-                if response.status == 400:
-                    # NOTE: Need `and "Expected a folder" in await response.text()`?
-                    _, _, after = str(self.location).rpartition(SEPARATOR)
-                    yield SEPARATOR + after
-                    # Need to `return` to terminate
-                    return
+            try:
+                async with session.get(
+                    url=f"{storage_api_url}?{query}",
+                    headers=self._header,
+                ) as response:
+                    if response.status == 400:
+                        # NOTE: Need `and "Expected a folder" in await response.text()`?
+                        _, _, after = str(self.location).rpartition(SEPARATOR)
+                        yield SEPARATOR + after
+                        # Need to `return` to terminate
+                        return
 
-                data = await response.json()
+                    data = await response.json()
+            except OSError as error:
+                logger.error(f"Error: {error}")
+                yield None
 
         for file in data["files"]:
             yield file["uri"]
