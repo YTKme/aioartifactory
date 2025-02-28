@@ -12,6 +12,7 @@ import pytest
 import tealogger
 
 from aioartifactory import AIOArtifactory
+from aioartifactory import RemotePath
 
 
 ARTIFACTORY_API_KEY = os.environ.get("ARTIFACTORY_API_KEY")
@@ -42,6 +43,32 @@ class TestAIOArtifactory:
     #     assert aioartifactory.host == host
 
     @pytest.mark.asyncio
+    async def test_deploy_one_source_simple(
+        self,
+        source: PathLike,
+        destination: str,
+    ):
+        """Test Deploy One Source Simple
+
+        Test simple deploy of one source to one destination.
+
+        :param source: The source (Local) path(s)
+        :type source: PathLike
+        :param destination: The destination (Remote) path(s)
+        :type destination: str
+        """
+
+        test_logger.debug(f"Source: {source}")
+        test_logger.debug(f"Destination: {destination}")
+
+        # aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+
+        # upload_list = await aioartifactory.deploy(
+        #     source=source,
+        #     destination=destination,
+        # )
+
+    @pytest.mark.asyncio
     async def test_deploy_one_artifact(
         self,
         source: PathLike,
@@ -59,6 +86,11 @@ class TestAIOArtifactory:
             destination=destination,
         )
         test_logger.debug(f"Upload List: {upload_list}")
+
+        for upload in upload_list:
+            remote_path = RemotePath(path=upload)
+            test_logger.debug(f"Remote Path: {remote_path}")
+            assert isinstance(remote_path, RemotePath)
 
     @pytest.mark.asyncio
     async def test_retrieve_one_source_simple(
@@ -152,6 +184,8 @@ class TestAIOArtifactory:
             source=source,
             destination=destination,
         )
+
+        test_logger.debug(f"Download List: {download_list}")
 
         for download in download_list:
             path = "/".join(PurePath(urlparse(download).path).parts[3:])

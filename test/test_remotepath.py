@@ -129,3 +129,8 @@ class TestRemotePath:
         test_logger.debug(f"Class: {self.__class__.__name__}")
 
         assert parse_url.scheme == scheme
+
+    @pytest.mark.asyncio
+    async def test_exist(self, path: str):
+        """Test Exist"""
+        pass

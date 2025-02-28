@@ -4,6 +4,7 @@ Local Path
 """
 
 from collections.abc import Generator
+from functools import lru_cache
 import hashlib
 import os
 from os import PathLike
@@ -58,6 +59,7 @@ class LocalPath(Path):
         self._path = path
 
     @property
+    @lru_cache(maxsize=3)
     def md5(self) -> str:
         """MD5 Checksum
 
@@ -76,6 +78,7 @@ class LocalPath(Path):
         return checksum
 
     @property
+    @lru_cache(maxsize=3)
     def sha1(self) -> str:
         """SHA1 Checksum
 
@@ -94,6 +97,7 @@ class LocalPath(Path):
         return checksum
 
     @property
+    @lru_cache(maxsize=3)
     def sha256(self) -> str:
         """SHA256 Checksum
 
@@ -112,6 +116,7 @@ class LocalPath(Path):
         return checksum
 
     @property
+    @lru_cache(maxsize=9)
     def checksum(self) -> dict:
         """Checksum
 

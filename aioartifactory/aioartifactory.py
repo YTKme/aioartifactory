@@ -277,7 +277,7 @@ class AIOArtifactory:
                         path=f"{destination}/{local_path.name}"
                     )
 
-                    # Update header
+                    # Update header with checksum
                     local_path_checksum = local_path.checksum
                     self._header.update({
                         "X-Checksum": local_path_checksum["md5"],
@@ -295,7 +295,8 @@ class AIOArtifactory:
                             logger.error(f"Upload Failed: {remote_path}")
                             raise RuntimeError(f"Upload Failed: {remote_path}")
 
-            upload_list.append(upload)
+                        data = await response.json()
+                        upload_list.append(data["downloadUri"])
 
             logger.info(f"Completed: {upload}")
 

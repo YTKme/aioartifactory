@@ -77,6 +77,14 @@
                         "https"
                     ]
                 }
+            },
+            "test_exist": {
+                "strategy": "auto",
+                "data": {
+                    "path": [
+                        "https://artifactory.corp.adobe.com/artifactory/generic-3di-resource-snapshot/pikachu.png"
+                    ]
+                }
             }
         }
     }
