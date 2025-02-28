@@ -61,12 +61,41 @@ class TestAIOArtifactory:
         test_logger.debug(f"Source: {source}")
         test_logger.debug(f"Destination: {destination}")
 
-        # aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
-        # upload_list = await aioartifactory.deploy(
-        #     source=source,
-        #     destination=destination,
-        # )
+        upload_list = await aioartifactory.deploy(
+            source=source,
+            destination=destination,
+        )
+        test_logger.debug(f"Upload List: {upload_list}")
+
+    @pytest.mark.asyncio
+    async def test_deploy_one_source_recursive(
+        self,
+        source: PathLike,
+        destination: str,
+    ):
+        """Test Deploy One Source Recursive
+
+        Test recursive deploy of one source to one destination.
+
+        :param source: The source (Local) path(s)
+        :type source: PathLike
+        :param destination: The destination (Remote) path(s)
+        :type destination: str
+        """
+
+        test_logger.debug(f"Source: {source}")
+        test_logger.debug(f"Destination: {destination}")
+
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+
+        upload_list = await aioartifactory.deploy(
+            source=source,
+            destination=destination,
+            recursive=True,
+        )
+        test_logger.debug(f"Upload List: {upload_list}")
 
     @pytest.mark.asyncio
     async def test_deploy_one_artifact(
