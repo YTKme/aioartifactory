@@ -139,6 +139,7 @@ https://artifactory.acme.com/artifactory/repository/path/subpath/
 * [Artifactory REST APIs](https://jfrog.com/help/r/jfrog-rest-apis/artifactory-rest-apis)
     * [Artifactory REST APIs SEARCHES](https://jfrog.com/help/r/jfrog-rest-apis/searches)
         * [Artifactory Maximum Number of Search Queries](https://jfrog.com/help/r/maximum-number-of-search-queries/maximum-number-of-search-queries.)
+    * [Deploy Artifact APIs](https://jfrog.com/help/r/jfrog-rest-apis/deploy-artifact-apis)
 
 ### Visual Studio Code
 
