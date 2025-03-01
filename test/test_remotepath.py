@@ -69,6 +69,32 @@ class TestRemotePath:
         assert str(remote_path.location) == str(location)
 
     @pytest.mark.asyncio
+    async def test_md5(self, path: str, md5: str):
+        """Test MD5"""
+
+        remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
+
+        checksum_md5 = await remote_path.md5
+
+        test_logger.debug(f"Remote Path MD5: {checksum_md5}")
+
+        assert isinstance(checksum_md5, str)
+        assert checksum_md5 == md5
+
+    @pytest.mark.asyncio
+    async def test_sha1(self, path: str, sha1: str):
+        """Test SHA1"""
+
+        remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
+
+        checksum_sha1 = await remote_path.sha1
+
+        test_logger.debug(f"Remote Path SHA1: {checksum_sha1}")
+
+        assert isinstance(checksum_sha1, str)
+        assert checksum_sha1 == sha1
+
+    @pytest.mark.asyncio
     async def test_sha256(self, path: str, sha256: str):
         """Test SHA256"""
 
