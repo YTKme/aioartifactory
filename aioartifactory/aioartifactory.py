@@ -4,6 +4,7 @@ Asynchronous Input Output (AIO) Artifactory
 """
 
 from asyncio import (BoundedSemaphore, Queue, TaskGroup)
+import os
 from os import PathLike
 from pathlib import Path
 from types import TracebackType
@@ -225,20 +226,19 @@ class AIOArtifactory:
 
             logger.debug(f"Source: {source}, Type: {type(source)}")
 
-            local_path = LocalPath(path=source)
-            logger.debug(f"Local Path: {local_path}")
+            source_path = LocalPath(path=source)
+            logger.debug(f"Source Path: {source_path}")
 
             # Enqueue the deploy query response
             # The `upload_queue` should be relative path
-            if local_path.is_file():
-                await upload_queue.put(local_path)
+            if source_path.is_file():
+                await upload_queue.put(source_path)
             else:
-                for file in local_path.get_file_list(recursive=recursive):
-                    # logger.debug(f"Local File: {file}")
-                    relative_path = local_path / Path(file).name
-                    logger.debug(f"Relative Path: {relative_path}")
+                for file in source_path.get_file_list(recursive=recursive):
+                    relative_path = os.path.relpath(file, start=source_path)
+                    local_path = source_path / relative_path
                     # Enqueue the upload queue
-                    await upload_queue.put(relative_path)
+                    await upload_queue.put(local_path)
 
     async def _upload_task(
         self,
