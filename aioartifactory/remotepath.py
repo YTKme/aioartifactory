@@ -108,6 +108,50 @@ class RemotePath(PurePath):
         ))
 
     @property
+    async def md5(self) -> str:
+        """MD5
+
+        Get the MD5 checksum of the Remote Path if available, else
+        return None.
+
+        :return: The MD5 checksum of the Remote Path
+        :rtype: str | None
+        """
+        storage_api_url = self._get_storage_api_url()
+        # tealogger.debug(f"Storage API URL: {storage_api_url}")
+
+        async with ClientSession() as session:
+            async with session.get(
+                url=storage_api_url,
+                headers=self._header,
+            ) as response:
+                data = await response.json()
+
+        return data["checksums"]["md5"]
+
+    @property
+    async def sha1(self) -> str:
+        """SHA1
+
+        Get the SHA-1 checksum of the Remote Path if available, else
+        return None.
+
+        :return: The SHA-1 checksum of the Remote Path
+        :rtype: str | None
+        """
+        storage_api_url = self._get_storage_api_url()
+        # tealogger.debug(f"Storage API URL: {storage_api_url}")
+
+        async with ClientSession() as session:
+            async with session.get(
+                url=storage_api_url,
+                headers=self._header,
+            ) as response:
+                data = await response.json()
+
+        return data["checksums"]["sha1"]
+
+    @property
     async def sha256(self) -> str:
         """SHA256
 
@@ -115,7 +159,7 @@ class RemotePath(PurePath):
         return None.
 
         :return: The SHA-256 checksum of the Remote Path
-        :rtype: str, None
+        :rtype: str | None
         """
         storage_api_url = self._get_storage_api_url()
         # tealogger.debug(f"Storage API URL: {storage_api_url}")
