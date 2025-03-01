@@ -69,6 +69,14 @@ class TestAIOArtifactory:
         )
         test_logger.debug(f"Upload List: {upload_list}")
 
+        for upload in upload_list:
+            # test_logger.debug(f"Upload: {upload}")
+
+            assert await RemotePath(
+                path=upload,
+                api_key=ARTIFACTORY_API_KEY
+            ).exist()
+
     @pytest.mark.asyncio
     async def test_deploy_one_source_recursive(
         self,
