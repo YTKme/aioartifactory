@@ -4,7 +4,8 @@ Remote Path
 """
 
 import os
-from pathlib import (_PosixFlavour, _WindowsFlavour, PurePath, Path)
+from pathlib import PurePath, Path
+import sys
 from typing import (AsyncGenerator, Optional)
 from urllib.parse import (unquote, urlparse)
 
@@ -30,7 +31,9 @@ class RemotePath(PurePath):
     """
 
     # NOTE: Backward compatibility for 3.11, remove in Python 3.12
-    _flavour = _PosixFlavour() if os.name == "posix" else _WindowsFlavour()
+    if sys.version_info < (3, 12):
+        from pathlib import (_PosixFlavour, _WindowsFlavour)
+        _flavour = _PosixFlavour() if os.name == "posix" else _WindowsFlavour()
 
     def __new__(
         cls,
