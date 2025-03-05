@@ -56,7 +56,11 @@ class LocalPath(Path):
         :param path: The path of the Local Path
         :type path: PathLike
         """
-        super().__init__(*args)
+        # NOTE: Backward compatibility for 3.11, remove in Python 3.12
+        if sys.version_info < (3, 12):
+            super().__init__(*args)
+        else:
+            super().__init__(path, *args)
 
         self._path = path
 
