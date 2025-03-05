@@ -5,6 +5,7 @@ Test Remote Path
 
 import os
 from pathlib import (PurePath, Path)
+import platform
 from urllib.parse import urlparse
 
 import pytest
@@ -58,15 +59,18 @@ class TestRemotePath:
 
         assert remote_path.repository == repository
 
-    def test_location(self, path: str, location: PurePath):
+    def test_location(self, path: str, location: str):
         """Test Location"""
 
         remote_path = RemotePath(path=path)
 
+        if platform.system() == "Windows":
+            location = PurePath(location).as_posix()
+
         test_logger.debug(f"Remote Path Location: {remote_path.location}")
 
         assert isinstance(remote_path.location, PurePath)
-        assert str(remote_path.location) == str(location)
+        assert remote_path.location.as_posix() == str(location)
 
     @pytest.mark.asyncio
     async def test_md5(self, path: str, md5: str):
