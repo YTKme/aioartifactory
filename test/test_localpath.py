@@ -44,10 +44,12 @@ class TestLocalPath:
         test_logger.debug(f"Path: {path}")
 
         local_path = LocalPath(path=path)
+        test_logger.warning(f"Local Path MD5: {local_path.md5}")
 
         try:
             with open(Path(path), "rb") as file:
                 checksum = hashlib.md5(file.read()).hexdigest()
+                test_logger.warning(f"Checksum: {checksum}")
 
             assert isinstance(local_path.md5, str)
 
@@ -84,6 +86,29 @@ class TestLocalPath:
 
         assert local_path.sha1 == checksum
 
+    def test_sha256(self, path: str):
+        """Test SHA256"""
+
+        test_logger.debug(f"Path: {path}")
+
+        local_path = LocalPath(path=path)
+
+        try:
+            with open(Path(path), "rb") as file:
+                checksum = hashlib.sha256(file.read()).hexdigest()
+
+            assert isinstance(local_path.sha256, str)
+
+        except IsADirectoryError as error:
+            test_logger.warning(f"Local Path is a Directory: {path}")
+            test_logger.error(f"Error: {error}")
+            checksum = None
+
+        test_logger.debug(f"Local Path SHA256: {local_path.sha256}")
+        test_logger.debug(f"SHA256 Checksum: {checksum}")
+
+        assert local_path.sha256 == checksum
+
     def test_checksum(self, path: str):
         """Test Checksum"""
 
@@ -115,29 +140,6 @@ class TestLocalPath:
         test_logger.debug(f"Checksum: {checksum}")
 
         assert local_path.checksum == checksum
-
-    def test_sha256(self, path: str):
-        """Test SHA256"""
-
-        test_logger.debug(f"Path: {path}")
-
-        local_path = LocalPath(path=path)
-
-        try:
-            with open(Path(path), "rb") as file:
-                checksum = hashlib.sha256(file.read()).hexdigest()
-
-            assert isinstance(local_path.sha256, str)
-
-        except IsADirectoryError as error:
-            test_logger.warning(f"Local Path is a Directory: {path}")
-            test_logger.error(f"Error: {error}")
-            checksum = None
-
-        test_logger.debug(f"Local Path SHA256: {local_path.sha256}")
-        test_logger.debug(f"SHA256 Checksum: {checksum}")
-
-        assert local_path.sha256 == checksum
 
     def test_get_file_list(
         self,
