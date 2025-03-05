@@ -4,7 +4,6 @@ Local Path
 """
 
 from collections.abc import Generator
-from functools import lru_cache
 import hashlib
 import os
 from os import PathLike
