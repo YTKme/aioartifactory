@@ -8,7 +8,8 @@ from functools import lru_cache
 import hashlib
 import os
 from os import PathLike
-from pathlib import (_PosixFlavour, _WindowsFlavour, Path)
+from pathlib import Path
+import sys
 
 import tealogger
 
@@ -29,7 +30,9 @@ class LocalPath(Path):
     """
 
     # NOTE: Backward compatibility for 3.11, remove in Python 3.12
-    _flavour = _PosixFlavour() if os.name == "posix" else _WindowsFlavour()
+    if sys.version_info < (3, 12):
+        from pathlib import (_PosixFlavour, _WindowsFlavour)
+        _flavour = _PosixFlavour() if os.name == "posix" else _WindowsFlavour()
 
     def __new__(
         cls,
@@ -59,7 +62,6 @@ class LocalPath(Path):
         self._path = path
 
     @property
-    @lru_cache(maxsize=3)
     def md5(self) -> str:
         """MD5 Checksum
 
@@ -78,7 +80,6 @@ class LocalPath(Path):
         return checksum
 
     @property
-    @lru_cache(maxsize=3)
     def sha1(self) -> str:
         """SHA1 Checksum
 
@@ -97,7 +98,6 @@ class LocalPath(Path):
         return checksum
 
     @property
-    @lru_cache(maxsize=3)
     def sha256(self) -> str:
         """SHA256 Checksum
 
@@ -116,7 +116,6 @@ class LocalPath(Path):
         return checksum
 
     @property
-    @lru_cache(maxsize=9)
     def checksum(self) -> dict:
         """Checksum
 
