@@ -165,15 +165,15 @@ class TestRemotePath:
         assert parse_url.scheme == scheme
 
     @pytest.mark.asyncio
-    async def test_exist(self, path: str, expect: bool):
-        """Test Exist"""
+    async def test_exists(self, path: str, expect: bool):
+        """Test Exists"""
 
         test_logger.debug(f"Path: {path}")
         test_logger.debug(f"Expect: {expect}")
 
         remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
 
-        assert (await remote_path.exist()) == expect
+        assert (await remote_path.exists()) == expect
 
     @pytest.mark.asyncio
     async def test_get_file_list(self, path: str):
