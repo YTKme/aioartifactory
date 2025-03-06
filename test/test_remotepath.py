@@ -17,6 +17,7 @@ from aioartifactory import RemotePath
 ARTIFACTORY_API_KEY = os.environ.get("ARTIFACTORY_API_KEY")
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 CURRENT_WORK_PATH = Path().cwd()
+SEPARATOR = "/"
 
 # Configure test_logger
 tealogger.configure(
@@ -117,14 +118,17 @@ class TestRemotePath:
         remote_path = RemotePath(path=path)
 
         parse_url = urlparse(path)
+        # Remove leading SEPARATOR and split the path with SEPARATOR
+        path_list = parse_url.path.lstrip(SEPARATOR).split(SEPARATOR)
+
         expected_path = PurePath(
             "//",
             # Network Location and Path
             "/".join([
                 parse_url.netloc,
-                *parse_url.path.split("/")[:2],
+                *path_list[:1],
                 "api/storage",
-                *parse_url.path.split("/")[2:],
+                *path_list[1:],
             ]),
         )
 
