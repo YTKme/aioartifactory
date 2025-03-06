@@ -5,6 +5,7 @@ Remote Path
 
 import os
 from pathlib import PurePath, Path
+import platform
 import sys
 from typing import (AsyncGenerator, Optional)
 from urllib.parse import (unquote, urlparse)
@@ -202,6 +203,13 @@ class RemotePath(PurePath):
 
     def _get_storage_api_url(self) -> str:
         """Get Storage API URL"""
+
+        storage_api_path = self._get_storage_api_path().as_posix()
+
+        # NOTE: Backward compatibility for 3.11, remove in Python 3.12
+        if platform.system() == "Windows" and sys.version_info < (3, 12):
+            storage_api_path = f"/{storage_api_path}"
+
         # The rest of the element(s) for URL
         parse_url_tail = "".join([
             # Parameter
@@ -217,16 +225,16 @@ class RemotePath(PurePath):
 
         return (
             f"{self._parse_url.scheme}:"
-            f"{self._get_storage_api_path().as_posix()}"
+            f"{storage_api_path}"
             f"{parse_url_tail}"
         )
 
-    async def exist(self) -> bool:
-        """Exist
+    async def exists(self) -> bool:
+        """Exists
 
-        Check if the Remote Path exist.
+        Check if the Remote Path exists.
 
-        :return: Whether the Remote Path exist
+        :return: Whether the Remote Path exists
         :rtype: bool
         """
         storage_api_url = self._get_storage_api_url()

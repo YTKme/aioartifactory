@@ -281,7 +281,7 @@ class AIOArtifactory:
 
                     remote_path = RemotePath(
                         path=f"{destination}/{local_path}"
-                    )
+                    ).as_posix()
 
                     # Update header with checksum
                     local_path_checksum = local_path.checksum

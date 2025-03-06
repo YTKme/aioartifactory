@@ -75,7 +75,7 @@ class TestAIOArtifactory:
             assert await RemotePath(
                 path=upload,
                 api_key=ARTIFACTORY_API_KEY
-            ).exist()
+            ).exists()
 
     @pytest.mark.asyncio
     async def test_deploy_one_source_recursive(
