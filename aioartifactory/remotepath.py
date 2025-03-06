@@ -121,13 +121,14 @@ class RemotePath(PurePath):
         :rtype: str | None
         """
         storage_api_url = self._get_storage_api_url()
-        # tealogger.debug(f"Storage API URL: {storage_api_url}")
+        # logger.debug(f"Storage API URL: {storage_api_url}")
 
         async with ClientSession() as session:
             async with session.get(
                 url=storage_api_url,
                 headers=self._header,
             ) as response:
+                # logger.warning(f"Response: {await response.json()}")
                 data = await response.json()
 
         return data["checksums"]["md5"]
@@ -143,7 +144,7 @@ class RemotePath(PurePath):
         :rtype: str | None
         """
         storage_api_url = self._get_storage_api_url()
-        # tealogger.debug(f"Storage API URL: {storage_api_url}")
+        # logger.debug(f"Storage API URL: {storage_api_url}")
 
         async with ClientSession() as session:
             async with session.get(
@@ -165,7 +166,7 @@ class RemotePath(PurePath):
         :rtype: str | None
         """
         storage_api_url = self._get_storage_api_url()
-        # tealogger.debug(f"Storage API URL: {storage_api_url}")
+        # logger.debug(f"Storage API URL: {storage_api_url}")
 
         async with ClientSession() as session:
             async with session.get(
@@ -185,21 +186,22 @@ class RemotePath(PurePath):
         :return: The PurePath of the storage API path
         :rtype: PurePath
         """
+        # Remove leading SEPARATOR and split the path with SEPARATOR
+        path_list = self._parse_url.path.lstrip(SEPARATOR).split(SEPARATOR)
+
         return PurePath(
             "//",
             # Network Location and Path
             SEPARATOR.join([
                 self._parse_url.netloc,
-                *self._parse_url.path.split(SEPARATOR)[:2],
+                *path_list[:1],
                 "api/storage",
-                *self._parse_url.path.split(SEPARATOR)[2:],
+                *path_list[1:],
             ]),
         )
 
     def _get_storage_api_url(self) -> str:
-        """Get Storage API URL
-        """
-
+        """Get Storage API URL"""
         # The rest of the element(s) for URL
         parse_url_tail = "".join([
             # Parameter
@@ -215,7 +217,7 @@ class RemotePath(PurePath):
 
         return (
             f"{self._parse_url.scheme}:"
-            f"{self._get_storage_api_path()}"
+            f"{self._get_storage_api_path().as_posix()}"
             f"{parse_url_tail}"
         )
 
