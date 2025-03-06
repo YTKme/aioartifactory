@@ -57,6 +57,11 @@ class TestLocalPath:
             test_logger.warning(f"Local Path is a Directory: {path}")
             test_logger.error(f"Error: {error}")
             checksum = None
+        except PermissionError as error:
+            # NOTE: Jenkins Issue
+            test_logger.warning(f"Permission Denied: {path}")
+            test_logger.error(f"Error: {error}")
+            checksum = None
 
         test_logger.debug(f"Local Path MD5: {local_path.md5}")
         test_logger.debug(f"MD5 Checksum: {checksum}")
@@ -80,6 +85,11 @@ class TestLocalPath:
             test_logger.warning(f"Local Path is a Directory: {path}")
             test_logger.error(f"Error: {error}")
             checksum = None
+        except PermissionError as error:
+            # NOTE: Jenkins Issue
+            test_logger.warning(f"Permission Denied: {path}")
+            test_logger.error(f"Error: {error}")
+            checksum = None
 
         test_logger.debug(f"Local Path SHA1: {local_path.sha1}")
         test_logger.debug(f"SHA1 Checksum: {checksum}")
@@ -101,6 +111,11 @@ class TestLocalPath:
 
         except IsADirectoryError as error:
             test_logger.warning(f"Local Path is a Directory: {path}")
+            test_logger.error(f"Error: {error}")
+            checksum = None
+        except PermissionError as error:
+            # NOTE: Jenkins Issue
+            test_logger.warning(f"Permission Denied: {path}")
             test_logger.error(f"Error: {error}")
             checksum = None
 
@@ -133,6 +148,11 @@ class TestLocalPath:
 
         except IsADirectoryError as error:
             test_logger.warning(f"Local Path is a Directory: {path}")
+            test_logger.error(f"Error: {error}")
+            checksum = None
+        except PermissionError as error:
+            # NOTE: Jenkins Issue
+            test_logger.warning(f"Permission Denied: {path}")
             test_logger.error(f"Error: {error}")
             checksum = None
 
