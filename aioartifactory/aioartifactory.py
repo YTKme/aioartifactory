@@ -86,6 +86,7 @@ class AIOArtifactory:
         self,
         source: str | list[str] | LocalPath | list[LocalPath],
         destination: str | list[str] | RemotePath | list[RemotePath],
+        property: dict = dict | None,
         recursive: bool = False,
         quiet: bool = False,
     ):
@@ -95,6 +96,8 @@ class AIOArtifactory:
         :type source: str | list[str] | LocalPath | list[LocalPath]
         :param destination: The destination (Remote) path(s)
         :type destination: str | list[str] | RemotePath | list[RemotePath]
+        :param property: The property(ies) metadata for the artifact(s)
+        :type property: dict, optional
         :param recursive: Whether to recursively deploy artifact(s)
         :type recursive: bool, optional
         :param quiet: Whether to show deploy progress
@@ -122,6 +125,7 @@ class AIOArtifactory:
             return await self._deploy(
                 source_list=source,
                 destination_list=destination,
+                property=property,
                 upload_queue=upload_queue,
                 session=session,
                 recursive=recursive,
@@ -132,6 +136,7 @@ class AIOArtifactory:
         self,
         source_list: list[str] | list[LocalPath],
         destination_list: list[str] | list[RemotePath],
+        property: dict,
         upload_queue: Queue,
         session: ClientSession,
         recursive: bool,
@@ -187,6 +192,7 @@ class AIOArtifactory:
                 group.create_task(
                     self._upload_task(
                         destination_list=destination_list,
+                        property=property,
                         upload_queue=upload_queue,
                         upload_list=upload_list,
                         session=session,
@@ -243,6 +249,7 @@ class AIOArtifactory:
     async def _upload_task(
         self,
         destination_list: list[str] | list[RemotePath],
+        property: dict,
         upload_queue: Queue,
         upload_list: list[str],
         session: ClientSession,
@@ -251,6 +258,8 @@ class AIOArtifactory:
 
         :param destination_list: The destination list
         :type destination_list: list[str] | list[RemotePath]
+        :param property: The property(ies) metadata for the artifact(s)
+        :type property: dict
         :param upload_queue: The upload queue
         :type upload_queue: Queue
         :param upload_list: The upload list store what is uploaded
@@ -268,6 +277,8 @@ class AIOArtifactory:
 
             logger.info(f"Upload: {upload}, Type: {type(upload)}")
             logger.debug(f"Destination List: {destination_list}")
+
+            logger.warning(f"Property: {property}")
 
             local_path = LocalPath(path=upload)
             logger.debug(f"Local Path: {local_path}")
