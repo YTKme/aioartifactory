@@ -33,14 +33,15 @@ jobs:
         python -m build
 
     - name: Publish distribution 📦 to PyPI Test
-      if: github.ref == 'refs/heads/test'
+      if: startsWith(github.ref, 'refs/heads/test')
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
+        repository-url: https://test.pypi.org/legacy/
         user: __token__
         password: ${{ secrets.PYPI_TEST_PYTHON_AIOARTIFACTORY_TOKEN }}
 
     - name: Publish distribution 📦 to PyPI
-      if: github.ref == 'refs/heads/main'
+      if: startsWith(github.ref, 'refs/heads/main')
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
