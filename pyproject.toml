@@ -29,7 +29,7 @@ classifiers = [
     "Development Status :: 3 - Alpha",
 
     "Intended Audience :: Developers",
-    "Topic :: Software Development :: Artifactory",
+    "Topic :: Software Development :: Libraries",
 
     "License :: OSI Approved :: MIT License",
 
