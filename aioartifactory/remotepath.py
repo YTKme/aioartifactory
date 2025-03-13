@@ -8,7 +8,7 @@ from pathlib import PurePath, Path
 import platform
 import sys
 from typing import (AsyncGenerator, Optional)
-from urllib.parse import (unquote, urlparse)
+from urllib.parse import (unquote, urlparse, urlunparse)
 
 from aiohttp import ClientSession
 
@@ -82,11 +82,23 @@ class RemotePath(PurePath):
 
     def __str__(self):
         """Informal or Nicely Printable String Representation"""
-        return f"{self._path}"
+        return f"{urlunparse(self._parse_url)}"
 
     def __repr__(self):
         """Official String Representation"""
-        return f"{self.__class__.__name__}({self._path!r})"
+        return f"{self.__class__.__name__}({urlunparse(self._parse_url)!r})"
+
+    @property
+    def parameter(self) -> str:
+        """Parameter"""
+        return self._parse_url.params
+
+    @parameter.setter
+    def parameter(self, value: dict):
+        """Parameter Setter"""
+        if self._parse_url.params:
+            self._path = self._path.replace(self._parse_url.params, value)
+            self._parse_url = self._parse_url._replace(params=value)
 
     @property
     def name(self) -> str:
