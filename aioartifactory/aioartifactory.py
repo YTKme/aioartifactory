@@ -281,7 +281,7 @@ class AIOArtifactory:
             logger.warning(f"Property: {property}")
 
             local_path = LocalPath(path=upload)
-            logger.debug(f"Local Path: {local_path}")
+            # logger.debug(f"Local Path: {local_path}")
 
             # Upload the file
             logger.debug(f"Uploading: {upload}")

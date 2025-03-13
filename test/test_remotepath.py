@@ -42,6 +42,16 @@ class TestRemotePath:
 
         assert isinstance(remote_path, PurePath)
 
+    def test_parameter(self, path: str, parameter: str):
+        """Test Parameter"""
+
+        remote_path = RemotePath(path=path)
+
+        test_logger.debug(f"Remote Path Parameter: {remote_path.parameter}")
+
+        assert remote_path.parameter == parameter
+
+
     def test_name(self, path: str, name: str):
         """Test Name"""
 
