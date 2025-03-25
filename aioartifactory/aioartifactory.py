@@ -86,7 +86,7 @@ class AIOArtifactory:
         self,
         source: str | list[str] | LocalPath | list[LocalPath],
         destination: str | list[str] | RemotePath | list[RemotePath],
-        property: dict = dict | None,
+        property: dict = None,
         recursive: bool = False,
         quiet: bool = False,
     ):
@@ -125,7 +125,7 @@ class AIOArtifactory:
             return await self._deploy(
                 source_list=source,
                 destination_list=destination,
-                property=property,
+                property_dictionary=property,
                 upload_queue=upload_queue,
                 session=session,
                 recursive=recursive,
@@ -136,7 +136,7 @@ class AIOArtifactory:
         self,
         source_list: list[str] | list[LocalPath],
         destination_list: list[str] | list[RemotePath],
-        property: dict,
+        property_dictionary: dict,
         upload_queue: Queue,
         session: ClientSession,
         recursive: bool,
@@ -192,7 +192,7 @@ class AIOArtifactory:
                 group.create_task(
                     self._upload_task(
                         destination_list=destination_list,
-                        property=property,
+                        property_dictionary=property_dictionary,
                         upload_queue=upload_queue,
                         upload_list=upload_list,
                         session=session,
@@ -230,10 +230,10 @@ class AIOArtifactory:
             if source is None:
                 break
 
-            logger.debug(f"Source: {source}, Type: {type(source)}")
+            # logger.debug(f"Source: {source}, Type: {type(source)}")
 
             source_path = LocalPath(path=source)
-            logger.debug(f"Source Path: {source_path}")
+            # logger.debug(f"Source Path: {source_path}")
 
             # Enqueue the deploy query response
             # The `upload_queue` should be relative path
@@ -249,7 +249,7 @@ class AIOArtifactory:
     async def _upload_task(
         self,
         destination_list: list[str] | list[RemotePath],
-        property: dict,
+        property_dictionary: dict,
         upload_queue: Queue,
         upload_list: list[str],
         session: ClientSession,
@@ -258,8 +258,9 @@ class AIOArtifactory:
 
         :param destination_list: The destination list
         :type destination_list: list[str] | list[RemotePath]
-        :param property: The property(ies) metadata for the artifact(s)
-        :type property: dict
+        :param property_dictionary: The property(ies) metadata for the
+            artifact(s)
+        :type property_dictionary: dict
         :param upload_queue: The upload queue
         :type upload_queue: Queue
         :param upload_list: The upload list store what is uploaded
@@ -277,8 +278,7 @@ class AIOArtifactory:
 
             logger.info(f"Upload: {upload}, Type: {type(upload)}")
             logger.debug(f"Destination List: {destination_list}")
-
-            logger.warning(f"Property: {property}")
+            # logger.debug(f"Property Dictionary: {property_dictionary}")
 
             local_path = LocalPath(path=upload)
             # logger.debug(f"Local Path: {local_path}")
@@ -292,7 +292,12 @@ class AIOArtifactory:
 
                     remote_path = RemotePath(
                         path=f"{destination}/{local_path}"
-                    ).as_posix()
+                    )
+                    if property_dictionary:
+                        # logger.debug(f"Property Dictionary: {property_dictionary}")
+                        remote_path.parameter = property_dictionary
+                    remote_path = remote_path.as_posix()
+                    # logger.debug(f"Remote Path: {remote_path}")
 
                     # Update header with checksum
                     local_path_checksum = local_path.checksum
@@ -469,8 +474,8 @@ class AIOArtifactory:
             if source is None:
                 break
 
-            logger.debug(f"Source: {source}, Type: {type(source)}")
-            logger.debug(f"Source Path: {urlparse(source).path}")
+            # logger.debug(f"Source: {source}, Type: {type(source)}")
+            # logger.debug(f"Source Path: {urlparse(source).path}")
 
             remote_path = RemotePath(path=source, api_key=self._api_key)
 
@@ -510,12 +515,12 @@ class AIOArtifactory:
             if download is None:
                 break
 
-            logger.debug(f"Download: {download}, Type: {type(download)}")
+            # logger.debug(f"Download: {download}, Type: {type(download)}")
 
             remote_path = RemotePath(path=download, api_key=self._api_key)
 
             # Download the file
-            logger.debug(f"Downloading: {download}")
+            # logger.debug(f"Downloading: {download}")
 
             async with session.get(
                 url=str(remote_path),
@@ -542,7 +547,7 @@ class AIOArtifactory:
 
             download_list.append(download)
 
-            logger.info(f"Completed: {download}")
+            # logger.info(f"Completed: {download}")
 
     # ----------------------------
     # Asynchronous Context Manager
