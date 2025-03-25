@@ -9,7 +9,7 @@ from os import PathLike
 from pathlib import Path
 from types import TracebackType
 from typing import (Optional, Type)
-from urllib.parse import (urlparse)
+# from urllib.parse import (urlparse)
 
 import aiofiles
 from aiohttp import (ClientSession, ClientTimeout, TCPConnector)
