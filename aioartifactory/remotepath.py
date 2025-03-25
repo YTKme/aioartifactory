@@ -73,7 +73,7 @@ class RemotePath(PurePath):
             self._token = kwargs.get("token")
             self._header = {"Authorization": f"Bearer {self._token}"}
 
-        self._path = path
+        # self._path = path
 
         # TODO: Validate URL
 
@@ -94,11 +94,18 @@ class RemotePath(PurePath):
         return self._parse_url.params
 
     @parameter.setter
-    def parameter(self, value: dict):
+    def parameter(self, value_dictionary: dict):
         """Parameter Setter"""
-        if self._parse_url.params:
-            self._path = self._path.replace(self._parse_url.params, value)
-            self._parse_url = self._parse_url._replace(params=value)
+        # if self._parse_url.params:
+        #     self._path = self._path.replace(self._parse_url.params, value)
+
+        #
+        self._parse_url = self._parse_url._replace(
+            params=";".join([
+                f"{key}={value}" for key, value
+                in value_dictionary.items()
+            ])
+        )
 
     @property
     def name(self) -> str:
