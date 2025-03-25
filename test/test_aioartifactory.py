@@ -130,6 +130,33 @@ class TestAIOArtifactory:
             assert isinstance(remote_path, RemotePath)
 
     @pytest.mark.asyncio
+    async def test_deploy_one_artifact_property(
+        self,
+        source: PathLike,
+        destination: str,
+        property: dict,
+    ):
+        """Deploy One Artifact Property"""
+
+        test_logger.debug(f"Source: {source}")
+        test_logger.debug(f"Destination: {destination}")
+        test_logger.debug(f"Property: {property}")
+
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+
+        upload_list = await aioartifactory.deploy(
+            source=source,
+            destination=destination,
+            property=property,
+        )
+        test_logger.debug(f"Upload List: {upload_list}")
+
+        for upload in upload_list:
+            remote_path = RemotePath(path=upload)
+            test_logger.debug(f"Remote Path: {remote_path}")
+            assert isinstance(remote_path, RemotePath)
+
+    @pytest.mark.asyncio
     async def test_retrieve_one_source_simple(
         self,
         source: str,
