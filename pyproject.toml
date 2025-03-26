@@ -62,7 +62,7 @@ test = [
 universal = true
 
 [tool.ruff.format]
-quote-style = "single"
+quote-style = "double"
 
 [tool.setuptools]
 packages = [
