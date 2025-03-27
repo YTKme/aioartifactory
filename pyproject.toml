@@ -21,7 +21,6 @@ authors = [
     {name = "Yan Kuang"},
 ]
 description = "Asynchronous Input Output (AIO) Artifactory"
-license = {file = "LICENSE"}
 keywords = [
     "aioartifactory"
 ]
@@ -30,8 +29,6 @@ classifiers = [
 
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries",
-
-    "License :: OSI Approved :: MIT License",
 
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -57,9 +54,6 @@ test = [
 [project.urls]
 "Homepage" = "https://github.com/YTKme/aioartifactory"
 "Bug Tracker" = "https://github.com/YTKme/aioartifactory/issues"
-
-[tool.distutils.bdist_wheel]
-universal = true
 
 [tool.ruff.format]
 quote-style = "double"
