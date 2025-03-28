@@ -536,6 +536,7 @@ class AIOArtifactory:
                     destination_path = Path(
                         destination / location
                     ).expanduser().resolve()
+                    # logger.debug(f"Destination Path: {destination_path}")
                     try:
                         destination_path.parent.mkdir(parents=True, exist_ok=True)
                     except OSError as e:
@@ -545,9 +546,9 @@ class AIOArtifactory:
                         async for chunk, _ in response.content.iter_chunks():
                             await file.write(chunk)
 
-            download_list.append(download)
+                    download_list.append(destination_path)
 
-            # logger.info(f"Completed: {download}")
+            # logger.info(f"Completed: {destination_path}")
 
     # ----------------------------
     # Asynchronous Context Manager

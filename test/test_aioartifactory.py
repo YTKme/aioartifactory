@@ -5,8 +5,7 @@ Test Asynchronous Input Output (AIO) Artifactory
 
 import os
 from os import PathLike
-from pathlib import Path, PurePath
-from urllib.parse import urlparse
+from pathlib import Path
 
 import pytest
 import tealogger
@@ -183,13 +182,7 @@ class TestAIOArtifactory:
         )
 
         for download in download_list:
-            path = "/".join(PurePath(urlparse(download).path).parts[3:])
-            full_path = Path("/".join([
-                str(CURRENT_WORK_PATH),
-                destination,
-                path,
-            ]))
-            assert full_path.exists()
+            assert Path(download).exists()
 
     @pytest.mark.asyncio
     async def test_retrieve_one_source_recursive(
@@ -217,13 +210,7 @@ class TestAIOArtifactory:
         )
 
         for download in download_list:
-            path = "/".join(PurePath(urlparse(download).path).parts[3:])
-            full_path = Path("/".join([
-                str(CURRENT_WORK_PATH),
-                destination,
-                path,
-            ]))
-            assert full_path.exists()
+            assert Path(download).exists()
 
     @pytest.mark.asyncio
     async def test_retrieve_one_artifact(
@@ -252,13 +239,7 @@ class TestAIOArtifactory:
         test_logger.debug(f"Download List: {download_list}")
 
         for download in download_list:
-            path = "/".join(PurePath(urlparse(download).path).parts[3:])
-            full_path = Path("/".join([
-                str(CURRENT_WORK_PATH),
-                destination,
-                path,
-            ]))
-            assert full_path.exists()
+            assert Path(download).exists()
 
     @pytest.mark.asyncio
     async def test_retrieve_many_artifact(
