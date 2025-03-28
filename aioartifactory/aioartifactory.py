@@ -468,7 +468,7 @@ class AIOArtifactory:
         :type recursive: bool
         """
         while True:
-            source = await source_queue.get()
+            source: str = await source_queue.get()
 
             # The signal to exit (check at the beginning)
             if source is None:
@@ -478,13 +478,30 @@ class AIOArtifactory:
             # logger.debug(f"Source Path: {urlparse(source).path}")
 
             remote_path = RemotePath(path=source, api_key=self._api_key)
+            # logger.debug(f"Remote Path: {remote_path}")
 
             # Enqueue the retrieve query response
             async for file in remote_path.get_file_list(recursive=recursive):
+                logger.debug(f"File: {file}, Type: {type(file)}")
+                # TODO: Need to account for file with no extension
+                if remote_path.suffix:
+                    # logger.debug(f"Download Input: {remote_path.parent}{file}")
+                    await download_queue.put(f"{remote_path.parent}{file}")
+                else:
+                    # logger.debug(f"Download Input: {source.rstrip('/')}{file}")
+                    await download_queue.put(f"{source.rstrip('/')}{file}")
                 # Get partition before the last `/`
-                before, _, _ = str(source).rpartition("/")
-                logger.debug(f"Remote File: {before}{file}")
-                await download_queue.put(f"{before}{file}")
+                # before, separator, after = str(source).rpartition("/")
+                # logger.debug(f"Partition: {str(source).rpartition('/')}")
+                # logger.debug(f"Remote File: {source}{file}")
+                # await download_queue.put(f"{source}{file}")
+
+                # if str(source).endswith("/"):
+                #     logger.debug(f"Remote File: {before}{file}")
+                #     await download_queue.put(f"{before}{file}")
+                # else:
+                #     logger.debug(f"Remote File: {source}{file}")
+                #     await download_queue.put(f"{source}{file}")
 
     async def _download_task(
         self,
@@ -515,7 +532,7 @@ class AIOArtifactory:
             if download is None:
                 break
 
-            # logger.debug(f"Download: {download}, Type: {type(download)}")
+            logger.warning(f"Download: {download}, Type: {type(download)}")
 
             remote_path = RemotePath(path=download, api_key=self._api_key)
 
@@ -528,6 +545,7 @@ class AIOArtifactory:
             ) as response:
                 for destination in destination_list:
                     location = LocalPath(path=remote_path.location)
+                    logger.warning(f"Location: {location}")
                     if output_repository:
                         location = LocalPath(
                             f"{remote_path.repository}/{location}"
