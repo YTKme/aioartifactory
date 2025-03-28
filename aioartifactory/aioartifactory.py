@@ -490,18 +490,6 @@ class AIOArtifactory:
                 else:
                     # logger.debug(f"Download Input: {source.rstrip('/')}{file}")
                     await download_queue.put(f"{source.rstrip('/')}{file}")
-                # Get partition before the last `/`
-                # before, separator, after = str(source).rpartition("/")
-                # logger.debug(f"Partition: {str(source).rpartition('/')}")
-                # logger.debug(f"Remote File: {source}{file}")
-                # await download_queue.put(f"{source}{file}")
-
-                # if str(source).endswith("/"):
-                #     logger.debug(f"Remote File: {before}{file}")
-                #     await download_queue.put(f"{before}{file}")
-                # else:
-                #     logger.debug(f"Remote File: {source}{file}")
-                #     await download_queue.put(f"{source}{file}")
 
     async def _download_task(
         self,
