@@ -10,7 +10,7 @@ from .remotepath import RemotePath
 
 __all__ = [
     # Class
-    'AIOArtifactory',
-    'LocalPath',
-    'RemotePath',
+    "AIOArtifactory",
+    "LocalPath",
+    "RemotePath",
 ]
