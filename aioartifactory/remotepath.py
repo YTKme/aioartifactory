@@ -293,6 +293,7 @@ class RemotePath(PurePath):
                     url=f"{storage_api_url}?{query}",
                     headers=self._header,
                 ) as response:
+                    # logger.debug(f"Response: {await response.json()}")
                     if response.status == 400:
                         # NOTE: Need `and "Expected a folder" in await response.text()`?
                         _, _, after = str(self.location).rpartition(SEPARATOR)
