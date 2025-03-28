@@ -113,6 +113,15 @@ class RemotePath(PurePath):
         return unquote(PurePath(self._parse_url.path).name)
 
     @property
+    def parent(self):
+        """Parent"""
+        parent_url = self._parse_url._replace(
+            path=str(PurePath(self._parse_url.path).parent)
+        )
+        # logger.debug(f"Parent: {urlunparse(parent_url)}")
+        return unquote(urlunparse(parent_url))
+
+    @property
     def repository(self) -> str:
         """Repository"""
         return unquote(PurePath(self._parse_url.path).parts[2])
@@ -281,7 +290,7 @@ class RemotePath(PurePath):
         """
 
         storage_api_url = self._get_storage_api_url()
-        # logger.debug(f"Storage API URL: {storage_api_url}")
+        logger.warning(f"Storage API URL: {storage_api_url}")
 
         query = "list&deep=1" if recursive else "list"
         query += "&listFolders=0&includeRootPath=0"
