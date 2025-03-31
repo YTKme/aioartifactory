@@ -113,7 +113,7 @@ class RemotePath(PurePath):
         return unquote(PurePath(self._parse_url.path).name)
 
     @property
-    def parent(self):
+    def parent(self) -> str:
         """Parent"""
         parent_url = self._parse_url._replace(
             path=str(PurePath(self._parse_url.path).parent)
@@ -138,6 +138,31 @@ class RemotePath(PurePath):
         return PurePath(unquote(
             SEPARATOR.join(PurePath(self._parse_url.path).parts[3:])
         ))
+
+    @property
+    async def folder(self) -> bool:
+        """Folder
+
+        Determine whether or not the Remote Path is a folder.
+
+        :return: Whether or not the Remote Path is a folder
+        :rtype: bool
+        """
+        storage_api_url = self._get_storage_api_url()
+        # logger.debug(f"Storage API URL: {storage_api_url}")
+
+        query = "list"
+
+        async with ClientSession() as session:
+            async with session.get(
+                url=f"{storage_api_url}?{query}",
+                headers=self._header,
+            ) as response:
+                # logger.debug(f"Response: {await response.json()}")
+                if response.status == 400:
+                    return False
+
+        return True
 
     @property
     async def md5(self) -> str:

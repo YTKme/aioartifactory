@@ -82,6 +82,15 @@ class TestRemotePath:
 
         assert remote_path.name == name
 
+    def test_parent_get(self, path: str, parent: str):
+        """Test Parent Get"""
+
+        remote_path = RemotePath(path=path)
+
+        test_logger.debug(f"Remote Path Parent: {remote_path.parent}")
+
+        assert remote_path.parent == parent
+
     def test_repository_get(self, path: str, repository: str):
         """Test Repository Get"""
 
@@ -103,6 +112,20 @@ class TestRemotePath:
 
         assert isinstance(remote_path.location, PurePath)
         assert remote_path.location.as_posix() == str(location)
+
+    @pytest.mark.asyncio
+    async def test_folder_get(self, path: str, folder: bool):
+        """Test Folder Get"""
+
+        test_logger.debug(f"Path: {path}, Type: {type(path)}")
+        test_logger.debug(f"Folder: {folder}, Type: {type(folder)}")
+
+        remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
+
+        # remote_path_folder = remote_path.folder
+        # test_logger.debug(f"Remote Path Folder: {remote_path_folder}, Type: {type(remote_path_folder)}")
+
+        assert await remote_path.folder == folder
 
     @pytest.mark.asyncio
     async def test_md5_get(self, path: str, md5: str):
