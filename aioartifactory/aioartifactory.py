@@ -482,9 +482,9 @@ class AIOArtifactory:
 
             # Enqueue the retrieve query response
             async for file in remote_path.get_file_list(recursive=recursive):
-                logger.debug(f"File: {file}, Type: {type(file)}")
+                # logger.warning(f"File: {file}, Type: {type(file)}")
                 # TODO: Need to account for file with no extension
-                if remote_path.suffix:
+                if not await remote_path.folder:
                     # logger.debug(f"Download Input: {remote_path.parent}{file}")
                     await download_queue.put(f"{remote_path.parent}{file}")
                 else:
@@ -520,7 +520,7 @@ class AIOArtifactory:
             if download is None:
                 break
 
-            logger.warning(f"Download: {download}, Type: {type(download)}")
+            # logger.debug(f"Download: {download}, Type: {type(download)}")
 
             remote_path = RemotePath(path=download, api_key=self._api_key)
 
@@ -533,7 +533,7 @@ class AIOArtifactory:
             ) as response:
                 for destination in destination_list:
                     location = LocalPath(path=remote_path.location)
-                    logger.warning(f"Location: {location}")
+                    # logger.warning(f"Location: {location}")
                     if output_repository:
                         location = LocalPath(
                             f"{remote_path.repository}/{location}"
