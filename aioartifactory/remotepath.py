@@ -315,7 +315,7 @@ class RemotePath(PurePath):
         """
 
         storage_api_url = self._get_storage_api_url()
-        logger.warning(f"Storage API URL: {storage_api_url}")
+        # logger.warning(f"Storage API URL: {storage_api_url}")
 
         query = "list&deep=1" if recursive else "list"
         query += "&listFolders=0&includeRootPath=0"
