@@ -116,7 +116,7 @@ class RemotePath(PurePath):
     def parent(self) -> str:
         """Parent"""
         parent_url = self._parse_url._replace(
-            path=str(PurePath(self._parse_url.path).parent)
+            path=str(PurePath(self._parse_url.path).parent.as_posix())
         )
         # logger.debug(f"Parent: {urlunparse(parent_url)}")
         return unquote(urlunparse(parent_url))
@@ -127,7 +127,7 @@ class RemotePath(PurePath):
         return unquote(PurePath(self._parse_url.path).parts[2])
 
     @property
-    def location(self) -> PurePath:
+    def location(self) -> str:
         """Location
 
         The `location` is defined as the `path` component of the
@@ -137,7 +137,7 @@ class RemotePath(PurePath):
         """
         return PurePath(unquote(
             SEPARATOR.join(PurePath(self._parse_url.path).parts[3:])
-        ))
+        )).as_posix()
 
     @property
     async def folder(self) -> bool:
@@ -334,6 +334,11 @@ class RemotePath(PurePath):
                         yield SEPARATOR + after
                         # Need to `return` to terminate
                         return
+                    elif response.status == 404:
+                        # logger.error(f"Artifact Not Found: {self.location}")
+                        raise FileNotFoundError(
+                            f"Artifact Not Found: {self.location}"
+                        )
 
                     data = await response.json()
             except OSError as error:
