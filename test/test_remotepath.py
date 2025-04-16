@@ -105,13 +105,9 @@ class TestRemotePath:
 
         remote_path = RemotePath(path=path)
 
-        if platform.system() == "Windows":
-            location = PurePath(location).as_posix()
-
         test_logger.debug(f"Remote Path Location: {remote_path.location}")
 
-        assert isinstance(remote_path.location, PurePath)
-        assert remote_path.location.as_posix() == str(location)
+        assert remote_path.location == location
 
     @pytest.mark.asyncio
     async def test_folder_get(self, path: str, folder: bool):
