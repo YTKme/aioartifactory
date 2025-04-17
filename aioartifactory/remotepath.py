@@ -340,9 +340,9 @@ class RemotePath(PurePath):
                         raise FileNotFoundError(f"Could Not Find: {storage_api_url}")
 
                     data = await response.json()
+
+                    for file in data["files"]:
+                        yield file["uri"]
             except OSError as error:
                 logger.error(f"Error: {error}")
                 yield None
-
-        for file in data["files"]:
-            yield file["uri"]
