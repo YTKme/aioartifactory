@@ -240,7 +240,7 @@ class AIOArtifactory:
             if source_path.is_file():
                 await upload_queue.put(source_path)
             else:
-                for file in source_path.get_file_list(recursive=recursive):
+                async for file in source_path.get_file_list(recursive=recursive):
                     relative_path = os.path.relpath(file, start=source_path)
                     local_path = source_path / relative_path
                     # Enqueue the upload queue
@@ -484,12 +484,13 @@ class AIOArtifactory:
             async for file in remote_path.get_file_list(recursive=recursive):
                 # logger.warning(f"File: {file}, Type: {type(file)}")
                 # TODO: Need to account for file with no extension
-                if not await remote_path.folder:
-                    # logger.debug(f"Download Input: {remote_path.parent}{file}")
-                    await download_queue.put(f"{remote_path.parent}{file}")
-                else:
-                    # logger.debug(f"Download Input: {source.rstrip('/')}{file}")
-                    await download_queue.put(f"{source.rstrip('/')}{file}")
+                if file:
+                    if not await remote_path.folder:
+                        # logger.debug(f"Download Input: {remote_path.parent}{file}")
+                        await download_queue.put(f"{remote_path.parent}{file}")
+                    else:
+                        # logger.debug(f"Download Input: {source.rstrip('/')}{file}")
+                        await download_queue.put(f"{source.rstrip('/')}{file}")
 
     async def _download_task(
         self,
