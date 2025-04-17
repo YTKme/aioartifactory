@@ -335,10 +335,9 @@ class RemotePath(PurePath):
                         # Need to `return` to terminate
                         return
                     elif response.status == 404:
-                        # logger.error(f"Artifact Not Found: {self.location}")
-                        raise FileNotFoundError(
-                            f"Artifact Not Found: {self.location}"
-                        )
+                        # NOTE: Might need some improvement
+                        logger.warning(f"{response.status} {response.reason}")
+                        raise FileNotFoundError(f"Could Not Find: {storage_api_url}")
 
                     data = await response.json()
             except OSError as error:
