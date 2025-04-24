@@ -240,7 +240,7 @@ class AIOArtifactory:
             if source_path.is_file():
                 await upload_queue.put(source_path)
             else:
-                async for file in source_path.get_file_list(recursive=recursive):
+                for file in source_path.get_file_list(recursive=recursive):
                     relative_path = os.path.relpath(file, start=source_path)
                     local_path = source_path / relative_path
                     # Enqueue the upload queue
