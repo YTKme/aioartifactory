@@ -89,6 +89,7 @@ class AIOArtifactory:
         property: dict = None,
         recursive: bool = False,
         quiet: bool = False,
+        ssl: bool = True,
     ):
         """Deploy
 
@@ -96,12 +97,17 @@ class AIOArtifactory:
         :type source: str | list[str] | LocalPath | list[LocalPath]
         :param destination: The destination (Remote) path(s)
         :type destination: str | list[str] | RemotePath | list[RemotePath]
-        :param property: The property(ies) metadata for the artifact(s)
+        :param property: The property(ies) metadata for the artifact(s),
+            defaults to None
         :type property: dict, optional
-        :param recursive: Whether to recursively deploy artifact(s)
+        :param recursive: Whether to recursively deploy artifact(s),
+            defaults to False
         :type recursive: bool, optional
-        :param quiet: Whether to show deploy progress
+        :param quiet: Whether to show deploy progress, defaults to False
         :type quiet: bool, optional
+        :param ssl: Whether to check SSL certification, relax by setting
+            to False, defaults to True
+        :type ssl: bool, optional
         """
 
         # Create an `upload_queue`
@@ -117,7 +123,10 @@ class AIOArtifactory:
             client_session = self._client_session
         else:
             client_session = ClientSession(
-                connector=TCPConnector(limit_per_host=DEFAULT_MAXIMUM_CONNECTION),
+                connector=TCPConnector(
+                    limit_per_host=DEFAULT_MAXIMUM_CONNECTION,
+                    ssl=ssl,
+                ),
                 timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
             )
 
@@ -333,6 +342,7 @@ class AIOArtifactory:
         recursive: bool = False,
         output_repository: bool = False,
         quiet: bool = False,
+        ssl: bool = True,
     ) -> list[str]:
         """Retrieve
 
@@ -340,13 +350,20 @@ class AIOArtifactory:
         :type source: str | list[str]
         :param destination: The destination (Local) path(s)
         :type destination: str | list[str]
-        :param recursive: Whether to recursively retrieve artifact(s)
+        :param recursive: Whether to recursively retrieve artifact(s),
+            defaults to False
         :type recursive: bool, optional
         :param output_repository: Whether to include the repository name
             in the destination path, defaults to False
         :type output_repository: bool, optional
-        :param quiet: Whether to show retrieve progress
+        :param quiet: Whether to show retrieve progress, defaults to False
         :type quiet: bool, optional
+        :param ssl: Whether to check SSL certification, relax by setting
+            to False, defaults to True
+        :type ssl: bool, optional
+
+        :return: The list of retrieved artifact(s)
+        :rtype: list[str]
         """
 
         # Create a `download_queue`
@@ -362,7 +379,10 @@ class AIOArtifactory:
             client_session = self._client_session
         else:
             client_session = ClientSession(
-                connector=TCPConnector(limit_per_host=DEFAULT_MAXIMUM_CONNECTION),
+                connector=TCPConnector(
+                    limit_per_host=DEFAULT_MAXIMUM_CONNECTION,
+                    ssl=ssl,
+                ),
                 timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
             )
 
