@@ -5,7 +5,6 @@ Test Remote Path
 
 import os
 from pathlib import (PurePath, Path)
-import platform
 from urllib.parse import urlparse
 
 import pytest
