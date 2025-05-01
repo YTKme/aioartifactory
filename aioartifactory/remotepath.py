@@ -373,8 +373,8 @@ class RemotePath(PurePath):
     async def search_property(
         self,
         property: dict,
-        repository: str = None,
-    ) -> list[str]:
+        repository: list = None,
+    ) -> AsyncGenerator[str, None]:
         """Search Property
 
         Search artifact(s) by property(ies).
@@ -382,12 +382,54 @@ class RemotePath(PurePath):
         :param property: The property(ies) for the artifact(s)
         :type property: dict
         :param repository: The repository name, defaults to None
-        :type repository: str, optional
+        :type repository: list, optional
 
         :return: The list of artifact(s) found
-        :rtype: list[str]
+        :rtype: AsyncGenerator[str, None]
         """
 
-        logger.info("Search Property")
-        logger.debug(f"Property: {property}")
-        logger.debug(f"Repository: {repository}")
+        # logger.info("Search Property")
+        # logger.debug(f"Property: {property}")
+        # logger.debug(f"Repository: {repository}")
+
+        search_api_url = self.search_api_url
+        # logger.debug(f"Search API URL: {search_api_url}")
+
+        query = "?"
+
+        # Property
+        for property_name, property_value in property.items():
+            query += f"{property_name}={property_value}&"
+
+        # Repository
+        if repository:
+            query = f"{query}repos={','.join(repository)}"
+        else:
+            query = query[:-1]
+        # logger.debug(f"Query: {query}")
+
+        async with ClientSession() as session:
+            try:
+                async with session.get(
+                    url=f"{search_api_url}{query}",
+                    headers=self._header,
+                ) as response:
+                    if response.status == 400:
+                        raise ValueError(f"Bad Request: {response.reason}")
+
+                    data = await response.json()
+                    # logger.debug(f"Response Data: {data}")
+
+                    if not data["results"]:
+                        logger.warning(
+                            "No Artifact(s) Found For The Given Property(ies)."
+                        )
+                        yield None
+
+                    for artifact in data["results"]:
+                        # logger.debug(f"Artifact: {artifact}")
+                        yield artifact["uri"]
+
+            except OSError as error:
+                logger.error(f"Error: {error}")
+                yield None

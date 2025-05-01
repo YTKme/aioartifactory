@@ -577,35 +577,6 @@ class AIOArtifactory:
 
             # logger.info(f"Completed: {destination_path}")
 
-    # ------
-    # Search
-    # https://jfrog.com/help/r/jfrog-rest-apis/property-search
-    # ------
-
-    async def search_property(
-        self,
-        property: dict,
-        repository: str = None,
-    ) -> list[RemotePath]:
-        """Search Property
-
-        Search artifact(s) by property(ies).
-
-        :param property: The property(ies) for the artifact(s)
-        :type property: dict
-        :param repository: The repository name, defaults to None
-        :type repository: str, optional
-
-        :return: The list of artifact(s) found
-        :rtype: list[RemotePath]
-        """
-
-        logger.info("Search Property")
-        logger.debug(f"Property: {property}")
-        logger.debug(f"Repository: {repository}")
-
-        return []
-
     # ----------------------------
     # Asynchronous Context Manager
     # ----------------------------

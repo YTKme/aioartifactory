@@ -251,18 +251,22 @@ class TestRemotePath:
         self,
         path: str,
         property: dict,
-        repository: str,
+        repository: list,
+        expect: list,
     ):
         """Test Search Property Simple"""
 
         test_logger.debug(f"Path: {path}")
         test_logger.debug(f"Property: {property}")
         test_logger.debug(f"Repository: {repository}")
+        test_logger.debug(f"Expect: {expect}")
 
         remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
 
-        artifact_list = await remote_path.search_property(
+        artifact_list = remote_path.search_property(
             property=property,
             repository=repository,
         )
-        test_logger.debug(f"Artifact List: {artifact_list}")
+        async for artifact in artifact_list:
+            # test_logger.debug(f"Artifact: {artifact}")
+            assert artifact in expect
