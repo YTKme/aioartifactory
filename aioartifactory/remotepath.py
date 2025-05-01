@@ -3,11 +3,12 @@ Remote Path
 ~~~~~~~~~~~
 """
 
+from collections.abc import AsyncGenerator
 import os
 from pathlib import PurePath, Path
 import platform
 import sys
-from typing import (AsyncGenerator, Optional)
+from typing import Optional
 from urllib.parse import (unquote, urlparse, urlunparse)
 
 from aiohttp import ClientSession
@@ -384,7 +385,7 @@ class RemotePath(PurePath):
         :param repository: The repository name, defaults to None
         :type repository: list, optional
 
-        :return: The list of artifact(s) found
+        :yield: The list of artifact(s) found
         :rtype: AsyncGenerator[str, None]
         """
 

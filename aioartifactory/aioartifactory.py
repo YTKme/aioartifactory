@@ -4,6 +4,7 @@ Asynchronous Input Output (AIO) Artifactory
 """
 
 from asyncio import (BoundedSemaphore, Queue, TaskGroup)
+from collections.abc import AsyncGenerator
 import os
 from os import PathLike
 from pathlib import Path
@@ -576,6 +577,47 @@ class AIOArtifactory:
                     download_list.append(destination_path)
 
             # logger.info(f"Completed: {destination_path}")
+
+    # ------
+    # Search
+    # ------
+
+    async def search_property(
+        self,
+        source: str,
+        property: dict,
+        repository: list = None,
+    ) -> AsyncGenerator[str, None]:
+        """Search Property
+
+        Search artifact(s) by property(ies).
+
+        :param source: The source (Remote) path for Artifactory
+        :type source: str
+        :param property: The property(ies) for the artifact(s)
+        :type property: dict
+        :param repository: The repository name, defaults to None
+        :type repository: list, optional
+
+        :yield: The artifact(s) found
+        :rtype: AsyncGenerator[str, None]
+        """
+
+        logger.info("Search Property")
+        logger.debug(f"Source: {source}")
+        logger.debug(f"Property: {property}")
+        logger.debug(f"Repository: {repository}")
+
+        remote_path = RemotePath(path=source, api_key=self._api_key)
+
+        artifact_list = remote_path.search_property(
+            property=property,
+            repository=repository,
+        )
+
+        async for artifact in artifact_list:
+            logger.debug(f"Artifact: {artifact}")
+            yield artifact
 
     # ----------------------------
     # Asynchronous Context Manager

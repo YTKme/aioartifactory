@@ -260,6 +260,33 @@ class TestAIOArtifactory:
             recursive=True,
         )
 
+    @pytest.mark.asyncio
+    async def test_search_property_simple(
+        self,
+        source: str,
+        property: dict,
+        repository: list,
+        expect: list,
+    ):
+        """Test Search Property"""
+
+        test_logger.debug(f"Source: {source}")
+        test_logger.debug(f"Property: {property}")
+        test_logger.debug(f"Repository: {repository}")
+        test_logger.debug(f"Expect: {expect}")
+
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+
+        artifact_list = aioartifactory.search_property(
+            source=source,
+            property=property,
+            repository=repository,
+        )
+        async for artifact in artifact_list:
+            # test_logger.debug(f"Artifact: {artifact}")
+            assert artifact in expect
+
+
 #     async def test_retrieve_destination(
 #         self,
 #         source_list: list[str],
