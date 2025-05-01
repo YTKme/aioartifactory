@@ -108,6 +108,15 @@ class TestRemotePath:
 
         assert remote_path.location == location
 
+    def test_search_api_ur_get(self, path: str, search_api_url: str):
+        """Test Search API URL"""
+
+        remote_path = RemotePath(path=path)
+
+        test_logger.debug(f"Remote Path Search API URL: {remote_path.search_api_url}")
+
+        assert remote_path.search_api_url == search_api_url
+
     @pytest.mark.asyncio
     async def test_folder_get(self, path: str, folder: bool):
         """Test Folder Get"""
@@ -236,3 +245,24 @@ class TestRemotePath:
         # https://peps.python.org/pep-0525/
         assert file_list.__aiter__() is file_list
         assert (await file_list.__anext__()) is not None
+
+    @pytest.mark.asyncio
+    async def test_search_property_simple(
+        self,
+        path: str,
+        property: dict,
+        repository: str,
+    ):
+        """Test Search Property Simple"""
+
+        test_logger.debug(f"Path: {path}")
+        test_logger.debug(f"Property: {property}")
+        test_logger.debug(f"Repository: {repository}")
+
+        remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
+
+        artifact_list = await remote_path.search_property(
+            property=property,
+            repository=repository,
+        )
+        test_logger.debug(f"Artifact List: {artifact_list}")

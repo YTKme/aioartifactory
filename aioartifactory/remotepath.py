@@ -140,6 +140,24 @@ class RemotePath(PurePath):
         )).as_posix()
 
     @property
+    def search_api_url(self) -> str:
+        """Search API URL
+
+        Get the Search Application Programming Interface (API) Uniform
+        Resource Locator (URL) of the Remote Path.
+        See `Artifactory Property Search <https://jfrog.com/help/r/jfrog-rest-apis/property-search>`_.
+        """
+
+        return unquote(
+            "".join([
+                self._parse_url.scheme,
+                "://",
+                self._parse_url.netloc,
+                "/artifactory/api/search/prop",
+            ])
+        )
+
+    @property
     async def folder(self) -> bool:
         """Folder
 
@@ -282,6 +300,11 @@ class RemotePath(PurePath):
             f"{parse_url_tail}"
         )
 
+    def _get_search_api_url(self) -> str:
+        """Get Search API URL"""
+
+
+
     async def exists(self) -> bool:
         """Exists
 
@@ -346,3 +369,25 @@ class RemotePath(PurePath):
             except OSError as error:
                 logger.error(f"Error: {error}")
                 yield None
+
+    async def search_property(
+        self,
+        property: dict,
+        repository: str = None,
+    ) -> list[str]:
+        """Search Property
+
+        Search artifact(s) by property(ies).
+
+        :param property: The property(ies) for the artifact(s)
+        :type property: dict
+        :param repository: The repository name, defaults to None
+        :type repository: str, optional
+
+        :return: The list of artifact(s) found
+        :rtype: list[str]
+        """
+
+        logger.info("Search Property")
+        logger.debug(f"Property: {property}")
+        logger.debug(f"Repository: {repository}")
