@@ -592,7 +592,7 @@ class AIOArtifactory:
 
         Search artifact(s) by property(ies).
 
-        :param source: The source (Remote) path for Artifactory
+        :param source: The source (Remote) URL for Artifactory
         :type source: str
         :param property: The property(ies) for the artifact(s)
         :type property: dict
