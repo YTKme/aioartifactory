@@ -301,10 +301,6 @@ class RemotePath(PurePath):
             f"{parse_url_tail}"
         )
 
-    def _get_search_api_url(self) -> str:
-        """Get Search API URL"""
-
-
 
     async def exists(self) -> bool:
         """Exists
@@ -382,7 +378,8 @@ class RemotePath(PurePath):
 
         :param property: The property(ies) for the artifact(s)
         :type property: dict
-        :param repository: The repository name, defaults to None
+        :param repository: The repository name(s) to search for
+            artifact(s), defaults to None
         :type repository: list, optional
 
         :yield: The list of artifact(s) found

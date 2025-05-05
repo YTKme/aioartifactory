@@ -596,17 +596,18 @@ class AIOArtifactory:
         :type source: str
         :param property: The property(ies) for the artifact(s)
         :type property: dict
-        :param repository: The repository name, defaults to None
+        :param repository: The repository name(s) to search for
+            artifact(s), defaults to None
         :type repository: list, optional
 
         :yield: The artifact(s) found
         :rtype: AsyncGenerator[str, None]
         """
 
-        logger.info("Search Property")
-        logger.debug(f"Source: {source}")
-        logger.debug(f"Property: {property}")
-        logger.debug(f"Repository: {repository}")
+        # logger.info("Search Property")
+        # logger.debug(f"Source: {source}")
+        # logger.debug(f"Property: {property}")
+        # logger.debug(f"Repository: {repository}")
 
         remote_path = RemotePath(path=source, api_key=self._api_key)
 
