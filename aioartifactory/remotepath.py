@@ -385,6 +385,66 @@ class RemotePath(PurePath):
                 logger.error(f"Error: {error}")
                 yield None
 
+    # ----
+    # List
+    # ----
+
+    async def list(
+        self,
+        recursive: bool = False,
+        list_folder: bool = False,
+        timestamp: bool = False,
+        include_root_path: bool = False,
+    ) -> AsyncGenerator[str, None]:
+        """List
+
+        List the item(s) in the Remote Path.
+
+        :param recursive: Whether to recursively list item(s), defaults
+            to False
+        :type recursive: bool, optional
+
+        :yield: The list of item(s)
+        :rtype: AsyncGenerator[str, None]
+        """
+
+        storage_api_url = self._get_storage_api_url()
+        # logger.warning(f"Storage API URL: {storage_api_url}")
+
+        query = "list&deep=1" if recursive else "list"
+        query += "&listFolders=1" if list_folder else "&listFolders=0"
+        query += "&timestamp=1" if timestamp else "&timestamp=0"
+        query += "&includeRootPath=1" if include_root_path else "&includeRootPath=0"
+        # logger.debug(f"Query: {query}")
+
+        async with ClientSession(
+            connector=TCPConnector(ssl=self._ssl)
+        ) as session:
+            try:
+                async with session.get(
+                    url=f"{storage_api_url}?{query}",
+                    headers=self._header,
+                ) as response:
+                    # logger.debug(f"Response: {await response.json()}")
+                    if response.status == 400:
+                        raise ValueError(f"Bad Request: {response.reason}")
+
+                    data = await response.json()
+
+                    if not data["files"]:
+                        logger.warning("No Item(s) Found For The Given Query.")
+                        yield None
+
+                    for file in data["files"]:
+                        yield file["uri"]
+            except OSError as error:
+                logger.error(f"Error: {error}")
+                yield None
+
+    # ------
+    # Search
+    # ------
+
     async def search_property(
         self,
         property: dict,
@@ -392,7 +452,7 @@ class RemotePath(PurePath):
     ) -> AsyncGenerator[str, None]:
         """Search Property
 
-        Search artifact(s) by property(ies).
+        Search artifact(s) by property(ies) for a Remote Path.
 
         :param property: The property(ies) for the artifact(s)
         :type property: dict
