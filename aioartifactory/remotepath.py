@@ -3,6 +3,7 @@ Remote Path
 ~~~~~~~~~~~
 """
 
+import asyncio
 from collections.abc import AsyncGenerator
 import os
 from pathlib import PurePath, Path
@@ -340,51 +341,6 @@ class RemotePath(PurePath):
                 logger.error(f"Error: {error}")
                 return False
 
-    async def get_file_list(
-        self,
-        recursive: bool = False,
-    ) -> AsyncGenerator[str, None]:
-        """Get File List
-
-        Get a list of filename(s) with separator for the Remote Path.
-        (e.g. `/file.ext`).
-        """
-
-        storage_api_url = self._get_storage_api_url()
-        # logger.warning(f"Storage API URL: {storage_api_url}")
-
-        query = "list&deep=1" if recursive else "list"
-        query += "&listFolders=0&includeRootPath=0"
-        # logger.debug(f"Query: {query}")
-
-        async with ClientSession(
-            connector=TCPConnector(ssl=self._ssl)
-        ) as session:
-            try:
-                async with session.get(
-                    url=f"{storage_api_url}?{query}",
-                    headers=self._header,
-                ) as response:
-                    # logger.debug(f"Response: {await response.json()}")
-                    if response.status == 400:
-                        # NOTE: Need `and "Expected a folder" in await response.text()`?
-                        _, _, after = str(self.location).rpartition(SEPARATOR)
-                        yield SEPARATOR + after
-                        # Need to `return` to terminate
-                        return
-                    elif response.status == 404:
-                        # NOTE: Might need some improvement
-                        logger.warning(f"{response.status} {response.reason}")
-                        raise FileNotFoundError(f"Could Not Find: {storage_api_url}")
-
-                    data = await response.json()
-
-                    for file in data["files"]:
-                        yield file["uri"]
-            except OSError as error:
-                logger.error(f"Error: {error}")
-                yield None
-
     # ----
     # List
     # ----
@@ -440,6 +396,57 @@ class RemotePath(PurePath):
             except OSError as error:
                 logger.error(f"Error: {error}")
                 yield None
+
+        # Wait 250 ms for the underlying SSL connections to close
+        await asyncio.sleep(0.250)
+
+    async def get_file_list(
+        self,
+        recursive: bool = False,
+    ) -> AsyncGenerator[str, None]:
+        """Get File List
+
+        Get a list of filename(s) with separator for the Remote Path.
+        (e.g. `/file.ext`).
+        """
+
+        storage_api_url = self._get_storage_api_url()
+        # logger.warning(f"Storage API URL: {storage_api_url}")
+
+        query = "list&deep=1" if recursive else "list"
+        query += "&listFolders=0&includeRootPath=0"
+        # logger.debug(f"Query: {query}")
+
+        async with ClientSession(
+            connector=TCPConnector(ssl=self._ssl)
+        ) as session:
+            try:
+                async with session.get(
+                    url=f"{storage_api_url}?{query}",
+                    headers=self._header,
+                ) as response:
+                    # logger.debug(f"Response: {await response.json()}")
+                    if response.status == 400:
+                        # NOTE: Need `and "Expected a folder" in await response.text()`?
+                        _, _, after = str(self.location).rpartition(SEPARATOR)
+                        yield SEPARATOR + after
+                        # Need to `return` to terminate
+                        return
+                    elif response.status == 404:
+                        # NOTE: Might need some improvement
+                        logger.warning(f"{response.status} {response.reason}")
+                        raise FileNotFoundError(f"Could Not Find: {storage_api_url}")
+
+                    data = await response.json()
+
+                    for file in data["files"]:
+                        yield file["uri"]
+            except OSError as error:
+                logger.error(f"Error: {error}")
+                yield None
+
+        # Wait 250 ms for the underlying SSL connections to close
+        await asyncio.sleep(0.250)
 
     # ------
     # Search
@@ -511,3 +518,6 @@ class RemotePath(PurePath):
             except OSError as error:
                 logger.error(f"Error: {error}")
                 yield None
+
+        # Wait 250 ms for the underlying SSL connections to close
+        await asyncio.sleep(0.250)
