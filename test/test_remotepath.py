@@ -248,6 +248,40 @@ class TestRemotePath:
         assert (await file_list.__anext__()) is not None
 
     @pytest.mark.asyncio
+    async def test_list_simple(
+        self,
+        path: str,
+        recursive: bool,
+        list_folder: bool,
+        timestamp: bool,
+        include_root_path: bool,
+        expect: list,
+    ):
+        """Test List Simple"""
+
+        test_logger.debug(f"Path: {path}")
+        test_logger.debug(f"Recursive: {recursive}")
+        test_logger.debug(f"List Folder: {list_folder}")
+        test_logger.debug(f"Timestamp: {timestamp}")
+        test_logger.debug(f"Include Root Path: {include_root_path}")
+        test_logger.debug(f"Expect: {expect}")
+
+        remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
+
+        result_list = []
+        async for file in remote_path.list(
+            recursive=recursive,
+            list_folder=list_folder,
+            timestamp=timestamp,
+            include_root_path=include_root_path,
+        ):
+            # test_logger.debug(f"File: {file}")
+            if file:
+                result_list.append(file)
+
+        assert len(result_list) > expect
+
+    @pytest.mark.asyncio
     async def test_search_property_simple(
         self,
         path: str,
@@ -257,10 +291,10 @@ class TestRemotePath:
     ):
         """Test Search Property Simple"""
 
-        test_logger.debug(f"Path: {path}")
-        test_logger.debug(f"Property: {property}")
-        test_logger.debug(f"Repository: {repository}")
-        test_logger.debug(f"Expect: {expect}")
+        # test_logger.debug(f"Path: {path}")
+        # test_logger.debug(f"Property: {property}")
+        # test_logger.debug(f"Repository: {repository}")
+        # test_logger.debug(f"Expect: {expect}")
 
         remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
 
