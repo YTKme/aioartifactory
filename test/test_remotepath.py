@@ -259,12 +259,12 @@ class TestRemotePath:
     ):
         """Test List Simple"""
 
-        test_logger.debug(f"Path: {path}")
-        test_logger.debug(f"Recursive: {recursive}")
-        test_logger.debug(f"List Folder: {list_folder}")
-        test_logger.debug(f"Timestamp: {timestamp}")
-        test_logger.debug(f"Include Root Path: {include_root_path}")
-        test_logger.debug(f"Expect: {expect}")
+        # test_logger.debug(f"Path: {path}")
+        # test_logger.debug(f"Recursive: {recursive}")
+        # test_logger.debug(f"List Folder: {list_folder}")
+        # test_logger.debug(f"Timestamp: {timestamp}")
+        # test_logger.debug(f"Include Root Path: {include_root_path}")
+        # test_logger.debug(f"Expect: {expect}")
 
         remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
 
