@@ -41,6 +41,7 @@ class RemotePath(PurePath):
         cls,
         path: str,
         api_key: Optional[str] = None,  # NOTE: 3.11
+        ssl: Optional[bool] = True,
         *args,
         **kwargs
     ):
@@ -50,6 +51,9 @@ class RemotePath(PurePath):
         :type path: str
         :param api_key: The Artifactory API Key
         :type api_key: str, optional
+        :param ssl: Whether to check SSL certification, relax by setting
+            to False, defaults to True
+        :type ssl: bool, optional
         """
         return super().__new__(cls, path, *args, **kwargs)
 

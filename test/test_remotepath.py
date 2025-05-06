@@ -34,6 +34,7 @@ class TestRemotePath:
         remote_path = RemotePath(
             path=path,
             api_key=ARTIFACTORY_API_KEY,
+            ssl=True,
         )
 
         test_logger.debug(f"Remote Path __str__: {str(remote_path)}")
