@@ -132,6 +132,10 @@ https://artifactory.acme.com/artifactory/repository/path/subpath/
 
 ## Reference
 
+### General
+
+* [AIOHTTP Graceful Shutdown](https://docs.aiohttp.org/en/stable/client_advanced.html#graceful-shutdown)
+
 ### Artifactory
 
 * [Artifactory Query Language](https://jfrog.com/help/r/jfrog-artifactory-documentation/artifactory-query-language)
