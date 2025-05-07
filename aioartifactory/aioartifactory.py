@@ -73,6 +73,9 @@ class AIOArtifactory:
             self._token = kwargs.get("token")
             self._header = {"Authorization": f"Bearer {self._token}"}
 
+        # Secure Sockets Layer (SSL) Certification Check
+        self._ssl = kwargs.get("ssl", True)
+
         # Retrieve Limiter
         self._retrieve_limiter = BoundedSemaphore(10)
 
@@ -126,7 +129,7 @@ class AIOArtifactory:
             client_session = ClientSession(
                 connector=TCPConnector(
                     limit_per_host=DEFAULT_MAXIMUM_CONNECTION,
-                    ssl=ssl,
+                    ssl=self._ssl,
                 ),
                 timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
             )
@@ -382,7 +385,7 @@ class AIOArtifactory:
             client_session = ClientSession(
                 connector=TCPConnector(
                     limit_per_host=DEFAULT_MAXIMUM_CONNECTION,
-                    ssl=ssl,
+                    ssl=self._ssl,
                 ),
                 timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
             )
@@ -609,7 +612,11 @@ class AIOArtifactory:
         # logger.debug(f"Property: {property}")
         # logger.debug(f"Repository: {repository}")
 
-        remote_path = RemotePath(path=source, api_key=self._api_key)
+        remote_path = RemotePath(
+            path=source,
+            api_key=self._api_key,
+            ssl=self._ssl,
+        )
 
         artifact_list = remote_path.search_property(
             property=property,
