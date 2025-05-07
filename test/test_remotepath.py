@@ -51,7 +51,6 @@ class TestRemotePath:
 
         assert remote_path.parameter == parameter
 
-
     def test_parameter_set(
         self,
         path: str,
@@ -71,7 +70,6 @@ class TestRemotePath:
         remote_path.parameter = parameter
 
         assert str(remote_path) == str(expect)
-
 
     def test_name_get(self, path: str, name: str):
         """Test Name Get"""

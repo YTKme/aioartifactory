@@ -16,6 +16,8 @@ from aiohttp import ClientSession, TCPConnector
 
 import tealogger
 
+from aioartifactory.configuration import DEFAULT_SSL_CONNECTION_DELAY
+
 
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 SEPARATOR = "/"
@@ -398,7 +400,7 @@ class RemotePath(PurePath):
                 yield None
 
         # Wait 250 ms for the underlying SSL connections to close
-        await asyncio.sleep(0.250)
+        await asyncio.sleep(DEFAULT_SSL_CONNECTION_DELAY)
 
     async def get_file_list(
         self,
@@ -446,7 +448,7 @@ class RemotePath(PurePath):
                 yield None
 
         # Wait 250 ms for the underlying SSL connections to close
-        await asyncio.sleep(0.250)
+        await asyncio.sleep(DEFAULT_SSL_CONNECTION_DELAY)
 
     # ------
     # Search
@@ -520,4 +522,4 @@ class RemotePath(PurePath):
                 yield None
 
         # Wait 250 ms for the underlying SSL connections to close
-        await asyncio.sleep(0.250)
+        await asyncio.sleep(DEFAULT_SSL_CONNECTION_DELAY)
