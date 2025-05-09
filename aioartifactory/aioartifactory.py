@@ -624,7 +624,7 @@ class AIOArtifactory:
         )
 
         async for artifact in artifact_list:
-            logger.debug(f"Artifact: {artifact}")
+            # logger.debug(f"Artifact: {artifact}")
             yield artifact
 
     # ----------------------------
