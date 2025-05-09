@@ -346,7 +346,6 @@ class AIOArtifactory:
         recursive: bool = False,
         output_repository: bool = False,
         quiet: bool = False,
-        ssl: bool = True,
     ) -> list[str]:
         """Retrieve
 
@@ -362,9 +361,6 @@ class AIOArtifactory:
         :type output_repository: bool, optional
         :param quiet: Whether to show retrieve progress, defaults to False
         :type quiet: bool, optional
-        :param ssl: Whether to check SSL certification, relax by setting
-            to False, defaults to True
-        :type ssl: bool, optional
 
         :return: The list of retrieved artifact(s)
         :rtype: list[str]
@@ -501,7 +497,11 @@ class AIOArtifactory:
             # logger.debug(f"Source: {source}, Type: {type(source)}")
             # logger.debug(f"Source Path: {urlparse(source).path}")
 
-            remote_path = RemotePath(path=source, api_key=self._api_key)
+            remote_path = RemotePath(
+                path=source,
+                api_key=self._api_key,
+                ssl=self._ssl,
+            )
             # logger.debug(f"Remote Path: {remote_path}")
 
             # Enqueue the retrieve query response
@@ -547,7 +547,11 @@ class AIOArtifactory:
 
             # logger.debug(f"Download: {download}, Type: {type(download)}")
 
-            remote_path = RemotePath(path=download, api_key=self._api_key)
+            remote_path = RemotePath(
+                path=download,
+                api_key=self._api_key,
+                ssl=self._ssl,
+            )
 
             # Download the file
             # logger.debug(f"Downloading: {download}")
