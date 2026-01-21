@@ -457,7 +457,7 @@ class RemotePath(PurePath):
     async def search_property(
         self,
         property: dict,
-        repository: list = None,
+        repository: Optional[list] = None,
     ) -> AsyncGenerator[str, None]:
         """Search Property
 
