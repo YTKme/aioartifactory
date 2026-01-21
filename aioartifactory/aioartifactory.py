@@ -90,7 +90,7 @@ class AIOArtifactory:
         self,
         source: str | list[str] | LocalPath | list[LocalPath],
         destination: str | list[str] | RemotePath | list[RemotePath],
-        property: dict = None,
+        property: dict | None = None,
         recursive: bool = False,
         quiet: bool = False,
         ssl: bool = True,
@@ -149,7 +149,7 @@ class AIOArtifactory:
         self,
         source_list: list[str] | list[LocalPath],
         destination_list: list[str] | list[RemotePath],
-        property_dictionary: dict,
+        property_dictionary: dict | None,
         upload_queue: Queue,
         session: ClientSession,
         recursive: bool,
@@ -262,9 +262,9 @@ class AIOArtifactory:
     async def _upload_task(
         self,
         destination_list: list[str] | list[RemotePath],
-        property_dictionary: dict,
+        property_dictionary: dict | None,
         upload_queue: Queue,
-        upload_list: list[str],
+        upload_list: list[str | Path],
         session: ClientSession,
     ) -> None:
         """Upload Task
@@ -313,12 +313,12 @@ class AIOArtifactory:
                     # logger.debug(f"Remote Path: {remote_path}")
 
                     # Update header with checksum
-                    local_path_checksum = local_path.checksum
-                    self._header.update({
-                        "X-Checksum": local_path_checksum["md5"],
-                        "X-Checksum-Sha1": local_path_checksum["sha1"],
-                        "X-Checksum-Sha256": local_path_checksum["sha256"],
-                    })
+                    if local_path.checksum:
+                        self._header.update({
+                            "X-Checksum": local_path.checksum["md5"],
+                            "X-Checksum-Sha1": local_path.checksum["sha1"],
+                            "X-Checksum-Sha256": local_path.checksum["sha256"],
+                        })
 
                     async with session.put(
                         url=str(remote_path),
@@ -593,7 +593,7 @@ class AIOArtifactory:
         self,
         source: str,
         property: dict,
-        repository: list = None,
+        repository: list | None = None,
     ) -> AsyncGenerator[str, None]:
         """Search Property
 

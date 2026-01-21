@@ -65,7 +65,7 @@ class LocalPath(Path):
         self._path = path
 
     @property
-    def md5(self) -> str:
+    def md5(self) -> str | None:
         """MD5 Checksum
 
         Get the MD5 checksum of the Local Path.
@@ -83,7 +83,7 @@ class LocalPath(Path):
         return checksum
 
     @property
-    def sha1(self) -> str:
+    def sha1(self) -> str | None:
         """SHA1 Checksum
 
         Get the SHA1 checksum of the Local Path.
@@ -101,7 +101,7 @@ class LocalPath(Path):
         return checksum
 
     @property
-    def sha256(self) -> str:
+    def sha256(self) -> str | None:
         """SHA256 Checksum
 
         Get the SHA256 checksum of the Local Path.
@@ -119,7 +119,7 @@ class LocalPath(Path):
         return checksum
 
     @property
-    def checksum(self) -> dict:
+    def checksum(self) -> dict | None:
         """Checksum
 
         Get the checksum(s) of the Local Path in a dictionary.
