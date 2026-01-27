@@ -1,34 +1,75 @@
 {
-    "editor.insertSpaces": true,
-    "autopep8.args": [
-        "--experimental",
-        "--ignore=E501",
-        // "--max-line-length", "120",
-    ],
-    "black-formatter.args": [
-        "--line-length",
-        "80"
-    ],
-    "python.testing.autoTestDiscoverOnSaveEnabled": true,
-    "python.testing.pytestArgs": [
-        "--showlocals",
-        "--capture=tee-sys",
-        "-vvvvv",
-        "--durations=0",
-        "--junit-xml=junit-report.xml",
-        "--no-cov"
-    ],
-    "python.testing.pytestEnabled": true,
-    "python.testing.unittestEnabled": false,
-    "[json]": {
-        "editor.tabSize": 4
+  "editor.rulers": [
+    {
+      "column": 72,
+      "color": "#005A00FF"
     },
-    "[python]": {
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "never"
-        },
-        "editor.defaultFormatter": "ms-python.autopep8",
-        "editor.formatOnSave": false,
-        "editor.tabSize": 4
-    }
+    // {
+    //   "column": 80,
+    //   "color": "#4183C499"
+    // },
+    {
+      "column": 88,
+      "color": "#FFD34366"
+    },
+    // {
+    //   "column": 100,
+    //   "color": "#E33B2699"
+    // },
+    // {
+    //   "column": 120,
+    //   "color": "#4F5B93FF"
+    // }
+  ],
+  "editor.insertSpaces": true,
+  "python.testing.pytestArgs": [
+    "--showlocals",
+    "--capture=tee-sys",
+    "-vvvvv",
+    "--durations=0"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": false,
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4
+  },
+  "[javascript]": {
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+  "[javascriptreact]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+  },
+  "[json]": {
+    "editor.tabSize": 4,
+  },
+  "[typescript]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+  },
+  "[typescriptreact]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+  "autopep8.args": [
+    "--experimental",
+    "--ignore=E501",
+    // "--max-line-length", "120",
+  ]
 }
