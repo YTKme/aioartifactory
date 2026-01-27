@@ -8,7 +8,7 @@ module-root = ""
 
 [project]
 name = "aioartifactory"
-version = "0.1.15.dev20260120"
+version = "0.1.16.dev20260127"
 description = "Asynchronous Input Output (AIO) Artifactory"
 keywords = ["aioartifactory", "artifactory"]
 readme = "README.md"
