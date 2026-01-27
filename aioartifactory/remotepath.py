@@ -4,28 +4,24 @@ Remote Path
 """
 
 import asyncio
-from collections.abc import AsyncGenerator
 import os
-from pathlib import PurePath, Path
 import platform
 import sys
+from collections.abc import AsyncGenerator
+from pathlib import Path, PurePath
 from typing import Optional
-from urllib.parse import (unquote, urlparse, urlunparse)
-
-from aiohttp import ClientSession, TCPConnector
+from urllib.parse import unquote, urlparse, urlunparse
 
 import tealogger
+from aiohttp import ClientSession, TCPConnector
 
 from aioartifactory.configuration import DEFAULT_SSL_CONNECTION_DELAY
-
 
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 SEPARATOR = "/"
 
 # Configure logger
-tealogger.configure(
-    configuration=CURRENT_MODULE_PATH.parent / "tealogger.json"
-)
+tealogger.configure(configuration=CURRENT_MODULE_PATH / "tealogger.json")
 logger = tealogger.get_logger("remotepath")
 
 
@@ -37,7 +33,8 @@ class RemotePath(PurePath):
 
     # NOTE: Backward compatibility for 3.11, remove in Python 3.12
     if sys.version_info < (3, 12):
-        from pathlib import (_PosixFlavour, _WindowsFlavour)
+        from pathlib import _PosixFlavour, _WindowsFlavour
+
         _flavour = _PosixFlavour() if os.name == "posix" else _WindowsFlavour()
 
     def __new__(
@@ -46,7 +43,7 @@ class RemotePath(PurePath):
         api_key: Optional[str] = None,  # NOTE: 3.11
         ssl: Optional[bool] = True,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Create Constructor
 
@@ -64,7 +61,7 @@ class RemotePath(PurePath):
         self,
         path: str,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Initialize Constructor
 
@@ -112,10 +109,9 @@ class RemotePath(PurePath):
 
         #
         self._parse_url = self._parse_url._replace(
-            params=";".join([
-                f"{key}={value}" for key, value
-                in value_dictionary.items()
-            ])
+            params=";".join(
+                [f"{key}={value}" for key, value in value_dictionary.items()]
+            )
         )
 
     @property
@@ -146,9 +142,9 @@ class RemotePath(PurePath):
         prefix `part`.
         See `urllib.parse.urlparse <https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse>`_.
         """
-        return PurePath(unquote(
-            SEPARATOR.join(PurePath(self._parse_url.path).parts[3:])
-        )).as_posix()
+        return PurePath(
+            unquote(SEPARATOR.join(PurePath(self._parse_url.path).parts[3:]))
+        ).as_posix()
 
     @property
     def search_api_url(self) -> str:
@@ -160,12 +156,14 @@ class RemotePath(PurePath):
         """
 
         return unquote(
-            "".join([
-                self._parse_url.scheme,
-                "://",
-                self._parse_url.netloc,
-                "/artifactory/api/search/prop",
-            ])
+            "".join(
+                [
+                    self._parse_url.scheme,
+                    "://",
+                    self._parse_url.netloc,
+                    "/artifactory/api/search/prop",
+                ]
+            )
         )
 
     @property
@@ -182,9 +180,7 @@ class RemotePath(PurePath):
 
         query = "list"
 
-        async with ClientSession(
-            connector=TCPConnector(ssl=self._ssl)
-        ) as session:
+        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
             async with session.get(
                 url=f"{storage_api_url}?{query}",
                 headers=self._header,
@@ -208,9 +204,7 @@ class RemotePath(PurePath):
         storage_api_url = self._get_storage_api_url()
         # logger.debug(f"Storage API URL: {storage_api_url}")
 
-        async with ClientSession(
-            connector=TCPConnector(ssl=self._ssl)
-        ) as session:
+        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
             async with session.get(
                 url=storage_api_url,
                 headers=self._header,
@@ -233,9 +227,7 @@ class RemotePath(PurePath):
         storage_api_url = self._get_storage_api_url()
         # logger.debug(f"Storage API URL: {storage_api_url}")
 
-        async with ClientSession(
-            connector=TCPConnector(ssl=self._ssl)
-        ) as session:
+        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
             async with session.get(
                 url=storage_api_url,
                 headers=self._header,
@@ -257,9 +249,7 @@ class RemotePath(PurePath):
         storage_api_url = self._get_storage_api_url()
         # logger.debug(f"Storage API URL: {storage_api_url}")
 
-        async with ClientSession(
-            connector=TCPConnector(ssl=self._ssl)
-        ) as session:
+        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
             async with session.get(
                 url=storage_api_url,
                 headers=self._header,
@@ -283,12 +273,14 @@ class RemotePath(PurePath):
         return PurePath(
             "//",
             # Network Location and Path
-            SEPARATOR.join([
-                self._parse_url.netloc,
-                *path_list[:1],
-                "api/storage",
-                *path_list[1:],
-            ]),
+            SEPARATOR.join(
+                [
+                    self._parse_url.netloc,
+                    *path_list[:1],
+                    "api/storage",
+                    *path_list[1:],
+                ]
+            ),
         )
 
     def _get_storage_api_url(self) -> str:
@@ -301,23 +293,21 @@ class RemotePath(PurePath):
             storage_api_path = f"/{storage_api_path}"
 
         # The rest of the element(s) for URL
-        parse_url_tail = "".join([
-            # Parameter
-            ";" if self._parse_url.params else "",
-            self._parse_url.params,
-            # Query
-            "?" if self._parse_url.query else "",
-            self._parse_url.query,
-            # Fragment
-            "#" if self._parse_url.fragment else "",
-            self._parse_url.fragment,
-        ])
-
-        return (
-            f"{self._parse_url.scheme}:"
-            f"{storage_api_path}"
-            f"{parse_url_tail}"
+        parse_url_tail = "".join(
+            [
+                # Parameter
+                ";" if self._parse_url.params else "",
+                self._parse_url.params,
+                # Query
+                "?" if self._parse_url.query else "",
+                self._parse_url.query,
+                # Fragment
+                "#" if self._parse_url.fragment else "",
+                self._parse_url.fragment,
+            ]
         )
+
+        return f"{self._parse_url.scheme}:{storage_api_path}{parse_url_tail}"
 
     async def exists(self) -> bool:
         """Exists
@@ -329,9 +319,7 @@ class RemotePath(PurePath):
         """
         storage_api_url = self._get_storage_api_url()
 
-        async with ClientSession(
-            connector=TCPConnector(ssl=self._ssl)
-        ) as session:
+        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
             try:
                 async with session.get(
                     url=storage_api_url,
@@ -375,9 +363,7 @@ class RemotePath(PurePath):
         query += "&includeRootPath=1" if include_root_path else "&includeRootPath=0"
         # logger.debug(f"Query: {query}")
 
-        async with ClientSession(
-            connector=TCPConnector(ssl=self._ssl)
-        ) as session:
+        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
             try:
                 async with session.get(
                     url=f"{storage_api_url}?{query}",
@@ -419,9 +405,7 @@ class RemotePath(PurePath):
         query += "&listFolders=0&includeRootPath=0"
         # logger.debug(f"Query: {query}")
 
-        async with ClientSession(
-            connector=TCPConnector(ssl=self._ssl)
-        ) as session:
+        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
             try:
                 async with session.get(
                     url=f"{storage_api_url}?{query}",
@@ -493,9 +477,7 @@ class RemotePath(PurePath):
             query = query[:-1]
         # logger.debug(f"Query: {query}")
 
-        async with ClientSession(
-            connector=TCPConnector(ssl=self._ssl)
-        ) as session:
+        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
             try:
                 async with session.get(
                     url=f"{search_api_url}{query}",

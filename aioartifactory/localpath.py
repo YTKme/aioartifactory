@@ -3,22 +3,19 @@ Local Path
 ~~~~~~~~~~
 """
 
-from collections.abc import Generator
 import hashlib
 import os
+import sys
+from collections.abc import Generator
 from os import PathLike
 from pathlib import Path
-import sys
 
 import tealogger
-
 
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 
 # Configure logger
-tealogger.configure(
-    configuration=CURRENT_MODULE_PATH.parent / "tealogger.json"
-)
+tealogger.configure(configuration=CURRENT_MODULE_PATH / "tealogger.json")
 logger = tealogger.get_logger("localpath")
 
 
@@ -30,14 +27,15 @@ class LocalPath(Path):
 
     # NOTE: Backward compatibility for 3.11, remove in Python 3.12
     if sys.version_info < (3, 12):
-        from pathlib import (_PosixFlavour, _WindowsFlavour)
+        from pathlib import _PosixFlavour, _WindowsFlavour
+
         _flavour = _PosixFlavour() if os.name == "posix" else _WindowsFlavour()
 
     def __new__(
         cls,
         path: PathLike,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Create Constructor
 
