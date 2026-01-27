@@ -3,39 +3,37 @@ Asynchronous Input Output (AIO) Artifactory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
 
-from asyncio import (BoundedSemaphore, Queue, TaskGroup)
-from collections.abc import AsyncGenerator
 import os
+from asyncio import BoundedSemaphore, Queue, TaskGroup
+from collections.abc import AsyncGenerator
 from os import PathLike
 from pathlib import Path
 from types import TracebackType
-from typing import (Optional, Type)
-# from urllib.parse import (urlparse)
+from typing import Optional, Type
 
+# from urllib.parse import (urlparse)
 import aiofiles
-from aiohttp import (ClientSession, ClientTimeout, TCPConnector)
 import tealogger
+from aiohttp import ClientSession, ClientTimeout, TCPConnector
 
 from .configuration import (
+    DEFAULT_CONNECTION_TIMEOUT,
     # DEFAULT_ARTIFACTORY_SEARCH_USER_QUERY_LIMIT,
     DEFAULT_MAXIMUM_CONNECTION,
-    DEFAULT_CONNECTION_TIMEOUT,
 )
 from .localpath import LocalPath
 from .remotepath import RemotePath
 
-
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 
 # Configure logger
-tealogger.configure(
-    configuration=CURRENT_MODULE_PATH.parent / "tealogger.json"
-)
+tealogger.configure(configuration=CURRENT_MODULE_PATH / "tealogger.json")
 logger = tealogger.get_logger("aioartifactory")
 
 
 class AIOArtifactory:
     """Asynchronous Input Output (AIO) Artifactory Class"""
+
     # __slots__ = ()
 
     def __new__(cls, *args, **kwargs):
@@ -47,7 +45,7 @@ class AIOArtifactory:
         # host: str,
         # port: int = 443,
         *args,
-        **kwargs
+        **kwargs,
     ) -> None:
         """Customize Constructor
 
@@ -177,7 +175,8 @@ class AIOArtifactory:
                         recursive=recursive,
                         # session=session,
                     )
-                ) for _ in range(connection_count)
+                )
+                for _ in range(connection_count)
             ]
 
             # Enqueue the `source` to the `source_queue`
@@ -264,7 +263,7 @@ class AIOArtifactory:
         destination_list: list[str] | list[RemotePath],
         property_dictionary: dict | None,
         upload_queue: Queue,
-        upload_list: list[str | Path],
+        upload_list: list[PathLike],
         session: ClientSession,
     ) -> None:
         """Upload Task
@@ -276,8 +275,8 @@ class AIOArtifactory:
         :type property_dictionary: dict
         :param upload_queue: The upload queue
         :type upload_queue: Queue
-        :param upload_list: The upload list store what is uploaded
-        :type upload_list: list[str]
+        :param upload_list: The upload list, store what is uploaded
+        :type upload_list: list[PathLike]
         :param session: The current session
         :type session: ClientSession
         """
@@ -303,9 +302,7 @@ class AIOArtifactory:
                 for destination in destination_list:
                     logger.debug(f"Destination: {destination}")
 
-                    remote_path = RemotePath(
-                        path=f"{destination}/{local_path}"
-                    )
+                    remote_path = RemotePath(path=f"{destination}/{local_path}")
                     if property_dictionary:
                         # logger.debug(f"Property Dictionary: {property_dictionary}")
                         remote_path.parameter = property_dictionary
@@ -314,11 +311,13 @@ class AIOArtifactory:
 
                     # Update header with checksum
                     if local_path.checksum:
-                        self._header.update({
-                            "X-Checksum": local_path.checksum["md5"],
-                            "X-Checksum-Sha1": local_path.checksum["sha1"],
-                            "X-Checksum-Sha256": local_path.checksum["sha256"],
-                        })
+                        self._header.update(
+                            {
+                                "X-Checksum": local_path.checksum["md5"],
+                                "X-Checksum-Sha1": local_path.checksum["sha1"],
+                                "X-Checksum-Sha256": local_path.checksum["sha256"],
+                            }
+                        )
 
                     async with session.put(
                         url=str(remote_path),
@@ -428,7 +427,8 @@ class AIOArtifactory:
                         recursive=recursive,
                         # session=session,
                     )
-                ) for _ in range(connection_count)
+                )
+                for _ in range(connection_count)
             ]
 
             # Enqueue the `source` to the `source_queue`
@@ -564,13 +564,11 @@ class AIOArtifactory:
                     location = LocalPath(path=remote_path.location)
                     # logger.warning(f"Location: {location}")
                     if output_repository:
-                        location = LocalPath(
-                            f"{remote_path.repository}/{location}"
-                        )
+                        location = LocalPath(f"{remote_path.repository}/{location}")
 
-                    destination_path = Path(
-                        destination / location
-                    ).expanduser().resolve()
+                    destination_path = (
+                        Path(destination / location).expanduser().resolve()
+                    )
                     # logger.debug(f"Destination Path: {destination_path}")
                     try:
                         destination_path.parent.mkdir(parents=True, exist_ok=True)
@@ -636,8 +634,7 @@ class AIOArtifactory:
     # ----------------------------
 
     async def __aenter__(self):
-        """Asynchronous Enter
-        """
+        """Asynchronous Enter"""
         # Client Session
         self._client_session = ClientSession(
             connector=TCPConnector(limit_per_host=DEFAULT_MAXIMUM_CONNECTION),
