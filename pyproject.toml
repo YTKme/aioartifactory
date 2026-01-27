@@ -28,12 +28,17 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 
 dependencies = ["aiofiles", "aiohttp[speedups]", "tealogger"]
 
 [dependency-groups]
-develop = ["ruff>=0.14"]
+develop = [
+    "ruff>=0.14",
+    "ty>=0.0.14",
+]
 test = [
     "pytest>=9.0",
     "pytest-asyncio>=1.3",
