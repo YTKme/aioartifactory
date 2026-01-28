@@ -7,7 +7,6 @@ import hashlib
 import os
 import sys
 from collections.abc import Generator
-from os import PathLike
 from pathlib import Path
 
 import tealogger
@@ -33,26 +32,26 @@ class LocalPath(Path):
 
     def __new__(
         cls,
-        path: PathLike,
+        path: str | Path,
         *args,
         **kwargs,
     ):
         """Create Constructor
 
         :param path: The path of the Local Path
-        :type path: PathLike
+        :type path: str | Path
         """
         return super().__new__(cls, path, *args, **kwargs)
 
     def __init__(
         self,
-        path: PathLike,
+        path: str | Path,
         *args,
     ):
         """Initialize Constructor
 
         :param path: The path of the Local Path
-        :type path: PathLike
+        :type path: str | Path
         """
         # NOTE: Backward compatibility for 3.11, remove in Python 3.12
         if sys.version_info < (3, 12):
@@ -149,7 +148,7 @@ class LocalPath(Path):
     def get_file_list(
         self,
         recursive: bool = False,
-    ) -> Generator[PathLike, None, None]:
+    ) -> Generator[str | Path, None, None]:
         """Get File List
 
         Get the list of files in the Local Path.

@@ -5,12 +5,13 @@ Test Local Path
 
 import hashlib
 import os
-from pathlib import (PurePath, Path)
+from pathlib import Path
 
+import pytest
 import tealogger
+from pytest_mock import MockerFixture
 
 from aioartifactory import LocalPath
-
 
 ARTIFACTORY_API_KEY = os.environ.get("ARTIFACTORY_API_KEY")
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
@@ -18,60 +19,68 @@ CURRENT_WORKING_DIRECTORY = Path().cwd()
 
 # Configure test_logger
 tealogger.configure(
-    configuration=CURRENT_MODULE_PATH.parent / "tealogger.json"
+    configuration=CURRENT_MODULE_PATH.parent / "aioartifactory" / "tealogger.json"
 )
-test_logger = tealogger.get_logger("test.localpath")
+logger = tealogger.get_logger("test.localpath")
 
 
+@pytest.mark.localpath
 class TestLocalPath:
     """Test Local Path"""
 
+    ########
+    # Real #
+    ########
+
+    @pytest.mark.real
     def test_construct(self, path: str):
         """Test Construct"""
 
-        test_logger.debug(f"Path: {path}")
+        logger.debug(f"Path: {path}")
 
         local_path = LocalPath(path=path)
 
-        test_logger.debug(f"Local Path __str__: {str(local_path)}")
-        test_logger.debug(f"Local Path __repr__: {repr(local_path)}")
+        logger.debug(f"Local Path __str__: {str(local_path)}")
+        logger.debug(f"Local Path __repr__: {repr(local_path)}")
 
-        assert isinstance(local_path, PurePath)
+        assert isinstance(local_path, Path)
 
+    @pytest.mark.real
     def test_md5(self, path: str):
         """Test MD5"""
 
-        test_logger.debug(f"Path: {path}")
+        logger.debug(f"Path: {path}")
 
         local_path = LocalPath(path=path)
-        test_logger.warning(f"Local Path MD5: {local_path.md5}")
+        logger.debug(f"Local Path MD5: {local_path.md5}")
 
         try:
             with open(Path(path), "rb") as file:
                 checksum = hashlib.md5(file.read()).hexdigest()
-                test_logger.warning(f"Checksum: {checksum}")
+                logger.debug(f"Checksum: {checksum}")
 
             assert isinstance(local_path.md5, str)
 
         except IsADirectoryError as error:
-            test_logger.warning(f"Local Path is a Directory: {path}")
-            test_logger.error(f"Error: {error}")
+            logger.warning(f"Local Path is a Directory: {path}")
+            logger.error(f"Error: {error}")
             checksum = None
         except PermissionError as error:
             # NOTE: Jenkins Issue
-            test_logger.warning(f"Permission Denied: {path}")
-            test_logger.error(f"Error: {error}")
+            logger.warning(f"Permission Denied: {path}")
+            logger.error(f"Error: {error}")
             checksum = None
 
-        test_logger.debug(f"Local Path MD5: {local_path.md5}")
-        test_logger.debug(f"MD5 Checksum: {checksum}")
+        logger.debug(f"Local Path MD5: {local_path.md5}")
+        logger.debug(f"MD5 Checksum: {checksum}")
 
         assert local_path.md5 == checksum
 
+    @pytest.mark.real
     def test_sha1(self, path: str):
         """Test SHA1"""
 
-        test_logger.debug(f"Path: {path}")
+        logger.debug(f"Path: {path}")
 
         local_path = LocalPath(path=path)
 
@@ -82,24 +91,25 @@ class TestLocalPath:
             assert isinstance(local_path.sha1, str)
 
         except IsADirectoryError as error:
-            test_logger.warning(f"Local Path is a Directory: {path}")
-            test_logger.error(f"Error: {error}")
+            logger.warning(f"Local Path is a Directory: {path}")
+            logger.error(f"Error: {error}")
             checksum = None
         except PermissionError as error:
             # NOTE: Jenkins Issue
-            test_logger.warning(f"Permission Denied: {path}")
-            test_logger.error(f"Error: {error}")
+            logger.warning(f"Permission Denied: {path}")
+            logger.error(f"Error: {error}")
             checksum = None
 
-        test_logger.debug(f"Local Path SHA1: {local_path.sha1}")
-        test_logger.debug(f"SHA1 Checksum: {checksum}")
+        logger.debug(f"Local Path SHA1: {local_path.sha1}")
+        logger.debug(f"SHA1 Checksum: {checksum}")
 
         assert local_path.sha1 == checksum
 
+    @pytest.mark.real
     def test_sha256(self, path: str):
         """Test SHA256"""
 
-        test_logger.debug(f"Path: {path}")
+        logger.debug(f"Path: {path}")
 
         local_path = LocalPath(path=path)
 
@@ -110,27 +120,28 @@ class TestLocalPath:
             assert isinstance(local_path.sha256, str)
 
         except IsADirectoryError as error:
-            test_logger.warning(f"Local Path is a Directory: {path}")
-            test_logger.error(f"Error: {error}")
+            logger.warning(f"Local Path is a Directory: {path}")
+            logger.error(f"Error: {error}")
             checksum = None
         except PermissionError as error:
             # NOTE: Jenkins Issue
-            test_logger.warning(f"Permission Denied: {path}")
-            test_logger.error(f"Error: {error}")
+            logger.warning(f"Permission Denied: {path}")
+            logger.error(f"Error: {error}")
             checksum = None
 
-        test_logger.debug(f"Local Path SHA256: {local_path.sha256}")
-        test_logger.debug(f"SHA256 Checksum: {checksum}")
+        logger.debug(f"Local Path SHA256: {local_path.sha256}")
+        logger.debug(f"SHA256 Checksum: {checksum}")
 
         assert local_path.sha256 == checksum
 
+    @pytest.mark.real
     def test_checksum(self, path: str):
         """Test Checksum"""
 
-        test_logger.debug(f"Path: {path}")
+        logger.debug(f"Path: {path}")
 
         local_path = LocalPath(path=path)
-        test_logger.debug(f"Local Path Checksum: {local_path.checksum}")
+        logger.debug(f"Local Path Checksum: {local_path.checksum}")
 
         try:
             with open(Path(path), "rb") as file:
@@ -147,36 +158,104 @@ class TestLocalPath:
             assert isinstance(local_path.checksum["sha256"], str)
 
         except IsADirectoryError as error:
-            test_logger.warning(f"Local Path is a Directory: {path}")
-            test_logger.error(f"Error: {error}")
+            logger.warning(f"Local Path is a Directory: {path}")
+            logger.error(f"Error: {error}")
             checksum = None
         except PermissionError as error:
             # NOTE: Jenkins Issue
-            test_logger.warning(f"Permission Denied: {path}")
-            test_logger.error(f"Error: {error}")
+            logger.warning(f"Permission Denied: {path}")
+            logger.error(f"Error: {error}")
             checksum = None
 
-        test_logger.debug(f"Local Path Checksum: {local_path.checksum}")
-        test_logger.debug(f"Checksum: {checksum}")
+        logger.debug(f"Local Path Checksum: {local_path.checksum}")
+        logger.debug(f"Checksum: {checksum}")
 
         assert local_path.checksum == checksum
 
-    def test_get_file_list(
-        self,
-        path: str,
-        file: str
-    ):
+    @pytest.mark.real
+    def test_get_file_list(self, path: str, file: str):
         """Test Get File List"""
 
-        test_logger.debug(f"Path: {path}")
-        test_logger.debug(f"File: {file}")
+        logger.debug(f"Path: {path}")
+        logger.debug(f"File: {file}")
 
         local_path = LocalPath(path=path)
 
         file_list = list(local_path.get_file_list())
-        test_logger.debug(f"File List: {file_list}")
+        logger.debug(f"File List: {file_list}")
 
-        assert (
-            Path(f"{path}/{file}").expanduser().resolve()
-            in list(file_list)
+        assert Path(f"{path}/{file}").expanduser().resolve() in list(file_list)
+
+    @pytest.mark.real
+    def test_get_file_list_exception(self, path: str, file: str):
+        """Test Get File List"""
+
+        logger.debug(f"Path: {path}")
+        logger.debug(f"File: {file}")
+
+        # Execute Local Path Get File List
+        with pytest.raises(FileNotFoundError):
+            local_path = LocalPath(
+                path=f"{CURRENT_MODULE_PATH.parent}/_test/randompath/"
+            )
+            _ = list(local_path.get_file_list())
+
+    ########
+    # Mock #
+    ########
+
+    @pytest.mark.mock
+    def test_get_file_list_mock(
+        self,
+        mocker: MockerFixture,
+    ):
+        """Test Get File List Mock"""
+
+        # Mock Local Path Get File List
+        mock_get_file_list = mocker.patch(
+            "aioartifactory.localpath.LocalPath.get_file_list"
         )
+        mock_get_file_list.return_value = iter(
+            [
+                f"{CURRENT_MODULE_PATH.parent}/_test/localpath/alpha.txt",
+                f"{CURRENT_MODULE_PATH.parent}/_test/localpath/beta.txt",
+            ]
+        )
+
+        # Execute Local Path Get File List
+        local_path = LocalPath(path=f"{CURRENT_MODULE_PATH.parent}/_test/localpath/")
+        file_list = local_path.get_file_list()
+
+        # logger.debug(f"File List: {file_list}")
+        # logger.debug(f"Mock Get File List: {mock_get_file_list.return_value}")
+
+        # Assert
+        mock_get_file_list.assert_called_once()
+        assert file_list == mock_get_file_list.return_value
+
+    @pytest.mark.mock
+    def test_get_file_list_exception_mock(
+        self,
+        mocker: MockerFixture,
+    ):
+        """Test Get File List Exception Mock"""
+
+        # Mock Local Path Get File List
+        # mock_get_file_list = mocker.patch(
+        #     "aioartifactory.localpath.LocalPath.get_file_list",
+        #     return_value=False,
+        #     side_effect=FileNotFoundError,
+        # )
+
+        # Execute Local Path Get File List
+        with pytest.raises(FileNotFoundError):
+            local_path = LocalPath(
+                path=f"{CURRENT_MODULE_PATH.parent}/_test/randompath/"
+            )
+            _ = list(local_path.get_file_list())
+
+        # logger.debug(f"File List: {file_list}")
+        # logger.debug(f"Mock Get File List: {mock_get_file_list.return_value}")
+
+        # Assert
+        # mock_get_file_list.assert_called_once()
