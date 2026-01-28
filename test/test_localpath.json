@@ -70,6 +70,19 @@
                         "beta.txt"
                     ]
                 }
+            },
+            "test_get_file_list_exception": {
+                "strategy": "product",
+                "data": {
+                    "path": [
+                        "./_test/localpath/",
+                        "./_test/randompath/"
+                    ],
+                    "file": [
+                        "gamma.txt",
+                        "delta.txt"
+                    ]
+                }
             }
         }
     }
