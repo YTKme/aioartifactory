@@ -46,4 +46,6 @@ markers = [
     "mock: mark a test as mock test.",
     "real: mark a test as real test.",
     "artifactory: mark a test as artifactory test.",
+    "localpath: mark a test as localpath test.",
+    "remotepath: mark a test as remotepath test.",
 ]
