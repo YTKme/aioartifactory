@@ -8,22 +8,13 @@ This module implement test configuration for Asynchronous Input Output
 
 import json
 import platform
+import shutil
 from itertools import product
 from pathlib import Path
-import shutil
 
 import pytest
-from pytest import (
-    Config,
-    ExitCode,
-    Metafunc,
-    Parser,
-    PytestPluginManager,
-    Session
-)
-
 import tealogger
-
+from pytest import Config, ExitCode, Metafunc, Parser, PytestPluginManager, Session
 
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 CURRENT_WORKING_DIRECTORY = Path().cwd()
@@ -41,14 +32,15 @@ TEST_FILE_LIST = [
 
 # Configure conftest_logger
 tealogger.configure(
-    configuration=CURRENT_MODULE_PATH.parent / "tealogger.json"
+    configuration=CURRENT_MODULE_PATH.parent / "aioartifactory" / "tealogger.json"
 )
-conftest_logger = tealogger.get_logger("test.conftest")
+logger = tealogger.get_logger("test.conftest")
 
 
 #######################
 # Initialization Hook #
 #######################
+
 
 def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager):
     """Register Command Line Option(s)
@@ -61,9 +53,9 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager):
     :param pluginmanager: The pytest plugin manager
     :type pluginmanager: pytest.PytestPluginManager
     """
-    conftest_logger.info("pytest Add Option")
-    conftest_logger.debug(f"Parser: {parser}")
-    conftest_logger.debug(f"Plugin Manager: {pluginmanager}")
+    logger.info("pytest Add Option")
+    logger.debug(f"Parser: {parser}")
+    logger.debug(f"Plugin Manager: {pluginmanager}")
 
 
 def pytest_configure(config: Config) -> None:
@@ -74,16 +66,16 @@ def pytest_configure(config: Config) -> None:
     :param config: The pytest config object
     :type config: pytest.Config
     """
-    conftest_logger.info("pytest Configure")
-    conftest_logger.debug(f"Config: {config}")
+    logger.info("pytest Configure")
+    logger.debug(f"Config: {config}")
 
     # Create the test data directory
-    conftest_logger.debug(f"Create Test Data Directory: {TEST_DATA_DIRECTORY}")
+    logger.debug(f"Create Test Data Directory: {TEST_DATA_DIRECTORY}")
     try:
         TEST_DATA_DIRECTORY.mkdir(parents=True, exist_ok=True)
     except OSError as e:
-        conftest_logger.error(f"Operating System Error: {e}")
-    conftest_logger.debug("Create Test Data Directory Success")
+        logger.error(f"Operating System Error: {e}")
+    logger.debug("Create Test Data Directory Success")
 
     # Create the test file data
     setup_test_file()
@@ -99,8 +91,8 @@ def pytest_unconfigure(config: Config):
     :param config: The pytest config object
     :type config: pytest.Config
     """
-    conftest_logger.info("pytest Unconfigure")
-    conftest_logger.debug(f"Config: {config}")
+    logger.info("pytest Unconfigure")
+    logger.debug(f"Config: {config}")
 
     # Remove the test file data
     # teardown_test_file()
@@ -121,34 +113,84 @@ def pytest_sessionstart(session: Session) -> None:
     Called after the Session object has been created and before
     performing collection and entering the run test loop.
 
+    conftest: This hook is only called for initial conftest(s).
+
     :param session: The pytest session object
     :type session: pytest.Session
     """
-    conftest_logger.info("pytest Session Start")
-    conftest_logger.debug(f"Session: {session}")
+    logger.info("pytest Session Start")
+    logger.debug(f"Session: {session}")
 
-    conftest_logger.debug("Platform Information")
-    conftest_logger.debug(f"Architecture: {platform.architecture()}")
-    conftest_logger.debug(f"Machine: {platform.machine()}")
-    conftest_logger.debug(f"Node: {platform.node()}")
-    conftest_logger.debug(f"Platform: {platform.platform()}")
-    conftest_logger.debug(f"Processor: {platform.processor()}")
-    conftest_logger.debug(f"Python Build: {platform.python_build()}")
-    conftest_logger.debug(f"Python Compiler: {platform.python_compiler()}")
-    conftest_logger.debug(f"Python Branch: {platform.python_branch()}")
-    conftest_logger.debug(f"Python Implementation: {platform.python_implementation()}")
-    conftest_logger.debug(f"Python Revision: {platform.python_revision()}")
-    conftest_logger.debug(f"Python Version: {platform.python_version()}")
-    conftest_logger.debug(f"Python Version Tuple: {platform.python_version_tuple()}")
-    conftest_logger.debug(f"Release: {platform.release()}")
-    conftest_logger.debug(f"System: {platform.system()}")
-    conftest_logger.debug(f"Version: {platform.version()}")
-    conftest_logger.debug(f"Unix Name: {platform.uname()}")
+    # Platform Information
+    # https://docs.python.org/3/library/platform.html
+    logger.debug("Platform Information")
+    # Cross Platform
+    logger.debug("Cross Platform Information")
+    logger.debug(f"Architecture: {platform.architecture()}")
+    logger.debug(f"Machine: {platform.machine()}")
+    logger.debug(f"Node: {platform.node()}")
+    logger.debug(f"Platform: {platform.platform()}")
+    logger.debug(f"Processor: {platform.processor()}")
+    logger.debug(f"Python Build: {platform.python_build()}")
+    logger.debug(f"Python Compiler: {platform.python_compiler()}")
+    logger.debug(f"Python Branch: {platform.python_branch()}")
+    logger.debug(f"Python Implementation: {platform.python_implementation()}")
+    logger.debug(f"Python Revision: {platform.python_revision()}")
+    logger.debug(f"Python Version: {platform.python_version()}")
+    logger.debug(f"Python Version Tuple: {platform.python_version_tuple()}")
+    logger.debug(f"Release: {platform.release()}")
+    logger.debug(f"System: {platform.system()}")
+    logger.debug(f"Version: {platform.version()}")
+    logger.debug(f"Unix Name: {platform.uname()}")
+    # Java Platform
+    logger.debug("Java Platform Information")
+    logger.debug(f"Java Version: {platform.java_ver()}")
+    # Windows Platform
+    logger.debug("Windows Platform Information")
+    logger.debug(f"Windows Version: {platform.win32_ver()}")
+    logger.debug(f"Windows Edition: {platform.win32_edition()}")
+    logger.debug(f"Windows IoT: {platform.win32_is_iot()}")
+    # macOS Platform
+    logger.debug("macOS Platform Information")
+    logger.debug(f"macOS Version: {platform.mac_ver()}")
+    # iOS Platform
+    # logger.debug("iOS Platform Information")
+    # logger.debug(f"iOS Version: {platform.ios_ver()}")
+    # Unix Platform
+    logger.debug("Unix Platform Information")
+    logger.debug(f"Unix libc Version: {platform.libc_ver()}")
+    # Linux Platform
+    # logger.debug("Linux Platform Information")
+    # logger.debug(f"Linux OS Release: {platform.freedesktop_os_release()}")
+    # Android Platform
+    # logger.debug("Android Platform Information")
+    # logger.debug(f"Android Version: {platform.android_ver()}")
+
+
+def pytest_sessionfinish(session: Session, exitstatus: int | ExitCode) -> None:
+    """Finish Session
+
+    Called after whole test run finished, right before returning the
+    exit status to the system.
+
+    conftest: Any conftest file can implement this hook.
+
+    NOTE: Run once
+
+    :param session: The pytest session object
+    :type session: pytest.Session
+    :param exitstatus: The status which pytest will return to the system
+    :type exitstatus: Union[int, pytest.ExitCode]
+    """
+    logger.info("pytest Session Finish")
+    logger.debug(f"Session: {session}")
+    logger.debug(f"Exit Status: {exitstatus}")
 
 
 ###################
 # Collection Hook #
 ###################
+
 
 def pytest_generate_tests(metafunc: Metafunc):
     """Generate Test Hook
@@ -163,7 +205,7 @@ def pytest_generate_tests(metafunc: Metafunc):
         function definition, only conftest files in the functions's
         directory and its parent directories are consulted.
 
-    Example:
+    Example Class:
         {
             "module_name":
                 "ClassName": {
@@ -181,11 +223,26 @@ def pytest_generate_tests(metafunc: Metafunc):
             ...
         }
 
+    Example Function:
+        {
+            "module_name":
+                "function_name": {
+                    "parameter": [
+                        "expression",
+                        ...
+                    ],
+                    ...
+                },
+                ...
+            },
+            ...
+        }
+
     :param metafunc: The Metafunc helper for the test function
     :type metafunc: pytest.Metafunc
     """
-    conftest_logger.info("pytest Generate Test")
-    conftest_logger.debug(f"Metafunc: {metafunc}")
+    logger.info("pytest Generate Test")
+    logger.debug(f"Metafunc: {metafunc}")
     # conftest_logger.debug(f"Module Name: {metafunc.module.__name__}")
 
     # Parse metafunc module
@@ -198,7 +255,7 @@ def pytest_generate_tests(metafunc: Metafunc):
         test_data_path = module_path / f"{module_name}.json"
     elif (module_path / "data.json").exists():
         test_data_path = module_path / "data.json"
-    conftest_logger.debug(f"Test Data Path: {test_data_path}")
+    logger.debug(f"Test Data Path: {test_data_path}")
 
     # Inject the test data
     if test_data_path:
@@ -206,42 +263,46 @@ def pytest_generate_tests(metafunc: Metafunc):
             with open(test_data_path, "r", encoding="utf-8") as file:
                 data = json.load(file)
         except FileNotFoundError as error:
-            conftest_logger.warning(f"No Test Data Found: {module_name}")
-            conftest_logger.error(f"Error: {error}")
+            logger.warning(f"No Test Data Found: {module_name}")
+            logger.error(f"Error: {error}")
             pytest.skip(f"Skip No Test Data Found: {module_name}")
         except TypeError as error:
-            conftest_logger.warning(f"No Test Data Path Set: {module_name}")
-            conftest_logger.error(f"Error: {error}")
+            logger.warning(f"No Test Data Path Set: {module_name}")
+            logger.error(f"Error: {error}")
             pytest.skip(f"Skip No Test Data Path Set: {module_name}")
 
         class_condition = [
             module_name in data,
             # Part of a class
-            hasattr(metafunc, "cls"),
             # The class name is in the test data
-            metafunc.cls.__name__ in data[module_name],
+            metafunc.cls.__name__ in data[module_name] if metafunc.cls else False,
             # Part of a function (should always be true)
-            hasattr(metafunc, "function"),
             # The function name is in the test data
-            metafunc.function.__name__ in data[module_name][metafunc.cls.__name__],
+            metafunc.function.__name__ in data[module_name][metafunc.cls.__name__]
+            if metafunc.cls and metafunc.function
+            else False,
+            # metafunc.cls and metafunc.function and metafunc.function.__name__ in data[module_name][metafunc.cls.__name__]
+            # if metafunc.cls and metafunc.function and metafunc.cls.__name__ in data[module_name] else False,
         ]
 
         ####################
         # Class Level Test #
         ####################
         if all(class_condition):
-            conftest_logger.debug("Generate Class Test")
+            logger.debug("Generate Class Test")
             class_name = metafunc.cls.__name__
             function_name = metafunc.function.__name__
-            # conftest_logger.debug(f"Class Name: {metafunc.cls.__name__}")
-            # conftest_logger.debug(f"Function Name: {metafunc.function.__name__}")
-            # conftest_logger.debug(f"Fixture Names: {metafunc.fixturenames}")
             function_data = data[module_name][class_name][function_name]
             test_data = function_data["data"]
             # conftest_logger.debug(f"Test Data: {test_data}")
 
             argument_name_list = test_data.keys()
             argument_value_list = test_data.values()
+            # conftest_logger.debug(f"Argument Name List: {argument_name_list}")
+            # conftest_logger.debug(f"Argument Value List: {argument_value_list}")
+            id_list = None
+            # id_list = []
+            indirect = False
 
             strategy = function_data["strategy"]
             # conftest_logger.debug(f"Strategy: {strategy}")
@@ -253,6 +314,20 @@ def pytest_generate_tests(metafunc: Metafunc):
                 case _:
                     # Create a zip of the argument value to test
                     argument_value_list = list(zip(*argument_value_list))
+
+            # NOTE: Default
+            # for argument_value_tuple in argument_value_list:
+            #     id_list.append("-".join(map(str, argument_value_tuple)))
+
+            # NOTE: There maybe a better way for this?
+            # if "name" in function_data:
+            #     id_list.extend(
+            #         [function_data["name"]] * len(argument_value_list)
+            #     )
+
+            # Indirect
+            if "indirect" in function_data:
+                indirect = function_data["indirect"]
 
             # Exclude
             if (
@@ -271,7 +346,7 @@ def pytest_generate_tests(metafunc: Metafunc):
                         exclude_value_list = list(product(*exclude_data.values()))
                     case _:
                         # Default
-                        exclude_value_list = list(product(*exclude_data.values()))
+                        exclude_value_list = list(zip(*exclude_data.values()))
 
                 # conftest_logger.debug(f"Exclude Value List: {exclude_value_list}")
 
@@ -293,25 +368,10 @@ def pytest_generate_tests(metafunc: Metafunc):
             metafunc.parametrize(
                 argnames=argument_name_list,
                 argvalues=argument_value_list,
+                indirect=indirect,
+                ids=id_list,
+                # scope="function",
             )
-
-
-def pytest_sessionfinish(session: Session, exitstatus: int | ExitCode):
-    """Finish Session
-
-    Called after whole test run finished, right before returning the
-    exit status to the system.
-
-    NOTE: Run once
-
-    :param session: The pytest session object
-    :type session: pytest.Session
-    :param exitstatus: The status which pytest will return to the system
-    :type exitstatus: Union[int, pytest.ExitCode]
-    """
-    conftest_logger.info("pytest Session Finish")
-    conftest_logger.debug(f"Session: {session}")
-    conftest_logger.debug(f"Exit Status: {exitstatus}")
 
 
 @pytest.fixture(scope="function")
@@ -328,29 +388,29 @@ def class_logger():
 
 def setup_test_file():
     """Setup Test File"""
-    conftest_logger.info("Setup Local Path")
+    logger.info("Setup Local Path")
 
     try:
         for test_file in TEST_FILE_LIST:
             file_path = TEST_DATA_DIRECTORY / test_file
-            conftest_logger.debug(f"Create File: {file_path}")
+            logger.debug(f"Create File: {file_path}")
             if file_path.is_dir():
                 file_path.mkdir(parents=True, exist_ok=True)
             else:
                 file_path.parent.mkdir(parents=True, exist_ok=True)
                 file_path.touch()
     except OSError as e:
-        conftest_logger.error(f"Operating System Error: {e}")
+        logger.error(f"Operating System Error: {e}")
 
 
 def teardown_test_file():
     """Teardown Test File"""
-    conftest_logger.info("Teardown Local Path")
+    logger.info("Teardown Local Path")
 
     try:
         for test_file in TEST_FILE_LIST:
             file_path = TEST_DATA_DIRECTORY / test_file
-            conftest_logger.debug(f"Remove File: {file_path}")
+            logger.debug(f"Remove File: {file_path}")
             if file_path.is_dir():
                 shutil.rmtree(file_path, ignore_errors=True)
             else:
@@ -362,8 +422,8 @@ def teardown_test_file():
             parent_path.add(directory_path)
 
         for path in parent_path:
-            conftest_logger.debug(f"Remove Directory: {path}")
+            logger.debug(f"Remove Directory: {path}")
             shutil.rmtree(path, ignore_errors=True)
 
     except OSError as e:
-        conftest_logger.error(f"Operating System Error: {e}")
+        logger.error(f"Operating System Error: {e}")
