@@ -304,7 +304,9 @@ def pytest_generate_tests(metafunc: Metafunc):
             # id_list = []
             indirect = False
 
-            strategy = function_data["strategy"]
+            strategy = (
+                function_data["strategy"] if "strategy" in function_data else "auto"
+            )
             # conftest_logger.debug(f"Strategy: {strategy}")
 
             match strategy:
