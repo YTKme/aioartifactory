@@ -4,14 +4,13 @@ Test Remote Path
 """
 
 import os
-from pathlib import (PurePath, Path)
+from pathlib import Path, PurePath
 from urllib.parse import urlparse
 
 import pytest
 import tealogger
 
 from aioartifactory import RemotePath
-
 
 ARTIFACTORY_API_KEY = os.environ.get("ARTIFACTORY_API_KEY")
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
@@ -20,14 +19,20 @@ SEPARATOR = "/"
 
 # Configure test_logger
 tealogger.configure(
-    configuration=CURRENT_MODULE_PATH.parent / "tealogger.json"
+    configuration=CURRENT_MODULE_PATH.parent / "aioartifactory" / "tealogger.json"
 )
 test_logger = tealogger.get_logger("test.remotepath")
 
 
+@pytest.mark.remotepath
 class TestRemotePath:
     """Test Remote Path"""
 
+    ########
+    # Real #
+    ########
+
+    @pytest.mark.real
     def test_construct(self, path: str):
         """Test Construct"""
 
@@ -42,6 +47,15 @@ class TestRemotePath:
 
         assert isinstance(remote_path, PurePath)
 
+        remote_path = RemotePath(
+            path=path,
+            token=ARTIFACTORY_API_KEY,
+            ssl=True,
+        )
+
+        assert isinstance(remote_path, PurePath)
+
+    @pytest.mark.real
     def test_parameter_get(self, path: str, parameter: str):
         """Test Parameter Get"""
 
@@ -51,6 +65,7 @@ class TestRemotePath:
 
         assert remote_path.parameter == parameter
 
+    @pytest.mark.real
     def test_parameter_set(
         self,
         path: str,
@@ -71,6 +86,7 @@ class TestRemotePath:
 
         assert str(remote_path) == str(expect)
 
+    @pytest.mark.real
     def test_name_get(self, path: str, name: str):
         """Test Name Get"""
 
@@ -80,6 +96,7 @@ class TestRemotePath:
 
         assert remote_path.name == name
 
+    @pytest.mark.real
     def test_parent_get(self, path: str, parent: str):
         """Test Parent Get"""
 
@@ -89,6 +106,7 @@ class TestRemotePath:
 
         assert remote_path.parent == parent
 
+    @pytest.mark.real
     def test_repository_get(self, path: str, repository: str):
         """Test Repository Get"""
 
@@ -98,6 +116,7 @@ class TestRemotePath:
 
         assert remote_path.repository == repository
 
+    @pytest.mark.real
     def test_location_get(self, path: str, location: str):
         """Test Location Get"""
 
@@ -107,6 +126,7 @@ class TestRemotePath:
 
         assert remote_path.location == location
 
+    @pytest.mark.real
     def test_search_api_ur_get(self, path: str, search_api_url: str):
         """Test Search API URL"""
 
@@ -116,6 +136,7 @@ class TestRemotePath:
 
         assert remote_path.search_api_url == search_api_url
 
+    @pytest.mark.real
     @pytest.mark.asyncio
     async def test_folder_get(self, path: str, folder: bool):
         """Test Folder Get"""
@@ -130,6 +151,7 @@ class TestRemotePath:
 
         assert await remote_path.folder == folder
 
+    @pytest.mark.real
     @pytest.mark.asyncio
     async def test_md5_get(self, path: str, md5: str):
         """Test MD5 Get"""
@@ -143,6 +165,7 @@ class TestRemotePath:
         assert isinstance(checksum_md5, str)
         assert checksum_md5 == md5
 
+    @pytest.mark.real
     @pytest.mark.asyncio
     async def test_sha1_get(self, path: str, sha1: str):
         """Test SHA1 Get"""
@@ -156,6 +179,7 @@ class TestRemotePath:
         assert isinstance(checksum_sha1, str)
         assert checksum_sha1 == sha1
 
+    @pytest.mark.real
     @pytest.mark.asyncio
     async def test_sha256_get(self, path: str, sha256: str):
         """Test SHA256 Get"""
@@ -169,6 +193,7 @@ class TestRemotePath:
         assert isinstance(checksum_sha256, str)
         assert checksum_sha256 == sha256
 
+    @pytest.mark.real
     def test_get_storage_api_path(self, path: str):
         """Test Get Storage API Path"""
 
@@ -181,12 +206,14 @@ class TestRemotePath:
         expected_path = PurePath(
             "//",
             # Network Location and Path
-            "/".join([
-                parse_url.netloc,
-                *path_list[:1],
-                "api/storage",
-                *path_list[1:],
-            ]),
+            "/".join(
+                [
+                    parse_url.netloc,
+                    *path_list[:1],
+                    "api/storage",
+                    *path_list[1:],
+                ]
+            ),
         )
 
         test_logger.debug(
@@ -195,13 +222,13 @@ class TestRemotePath:
         )
 
         test_logger.debug(
-            f"Expected Path: {expected_path}, "
-            f"Type: {type(expected_path)}"
+            f"Expected Path: {expected_path}, Type: {type(expected_path)}"
         )
 
         assert isinstance(remote_path._get_storage_api_path(), PurePath)
         assert remote_path._get_storage_api_path() == expected_path
 
+    @pytest.mark.real
     @pytest.mark.asyncio
     async def test_get_storage_api_url(self, path: str, scheme: str):
         """Test Get Storage API Path"""
@@ -210,8 +237,7 @@ class TestRemotePath:
 
         storage_api_url = remote_path._get_storage_api_url()
         test_logger.debug(
-            f"Storage API URL: {storage_api_url}, "
-            f"Type: {type(storage_api_url)}"
+            f"Storage API URL: {storage_api_url}, Type: {type(storage_api_url)}"
         )
 
         parse_url = urlparse(storage_api_url)
@@ -221,6 +247,7 @@ class TestRemotePath:
 
         assert parse_url.scheme == scheme
 
+    @pytest.mark.real
     @pytest.mark.asyncio
     async def test_exists(self, path: str, expect: bool):
         """Test Exists"""
@@ -232,6 +259,7 @@ class TestRemotePath:
 
         assert (await remote_path.exists()) == expect
 
+    @pytest.mark.real
     @pytest.mark.asyncio
     async def test_get_file_list(self, path: str):
         """Test Get File List"""
@@ -245,6 +273,7 @@ class TestRemotePath:
         assert file_list.__aiter__() is file_list
         assert (await file_list.__anext__()) is not None
 
+    @pytest.mark.real
     @pytest.mark.asyncio
     async def test_list_simple(
         self,
@@ -253,7 +282,7 @@ class TestRemotePath:
         list_folder: bool,
         timestamp: bool,
         include_root_path: bool,
-        expect: list,
+        expect: int,
     ):
         """Test List Simple"""
 
@@ -267,7 +296,7 @@ class TestRemotePath:
         remote_path = RemotePath(path=path, api_key=ARTIFACTORY_API_KEY)
 
         result_list = []
-        async for file in remote_path.list(
+        async for file in remote_path.item(
             recursive=recursive,
             list_folder=list_folder,
             timestamp=timestamp,
@@ -279,6 +308,7 @@ class TestRemotePath:
 
         assert len(result_list) > expect
 
+    @pytest.mark.real
     @pytest.mark.asyncio
     async def test_search_property_simple(
         self,
@@ -303,3 +333,7 @@ class TestRemotePath:
         async for artifact in artifact_list:
             # test_logger.debug(f"Artifact: {artifact}")
             assert artifact in expect
+
+    ########
+    # Mock #
+    ########
