@@ -9,7 +9,6 @@ import platform
 import sys
 from collections.abc import AsyncGenerator
 from pathlib import Path, PurePath
-from typing import Optional
 from urllib.parse import unquote, urlparse, urlunparse
 
 import tealogger
@@ -40,8 +39,9 @@ class RemotePath(PurePath):
     def __new__(
         cls,
         path: str,
-        api_key: Optional[str] = None,  # NOTE: 3.11
-        ssl: Optional[bool] = True,
+        api_key: str | None = None,  # NOTE: 3.11
+        token: str | None = None,
+        ssl: bool = True,
         *args,
         **kwargs,
     ):
@@ -332,17 +332,17 @@ class RemotePath(PurePath):
                 return False
 
     # ----
-    # List
+    # Item
     # ----
 
-    async def list(
+    async def item(
         self,
         recursive: bool = False,
         list_folder: bool = False,
         timestamp: bool = False,
         include_root_path: bool = False,
     ) -> AsyncGenerator[str, None]:
-        """List
+        """Item
 
         List the item(s) in the Remote Path.
 
@@ -441,7 +441,7 @@ class RemotePath(PurePath):
     async def search_property(
         self,
         property: dict,
-        repository: Optional[list] = None,
+        repository: list = [],
     ) -> AsyncGenerator[str, None]:
         """Search Property
 
