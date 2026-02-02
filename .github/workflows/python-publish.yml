@@ -14,7 +14,7 @@ on:
 jobs:
   deploy:
     name: Build and publish Python 🐍 distributions 📦 to PyPI and PyPI Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     environment:
       name: pypi
