@@ -37,8 +37,8 @@ jobs:
 
     - name: Publish distribution 📦 to PyPI Test
       if: startsWith(github.ref, 'refs/heads/test')
-      run: uv publish --index testpypi -v
+      run: uv publish --index testpypi
 
     - name: Publish distribution 📦 to PyPI
       if: startsWith(github.ref, 'refs/heads/main')
-      run: uv publish --index pypi -v
+      run: uv publish --index pypi
