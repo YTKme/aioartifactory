@@ -4,15 +4,12 @@ Test Asynchronous Input Output (AIO) Artifactory
 """
 
 import os
-from os import PathLike
 from pathlib import Path
 
 import pytest
 import tealogger
 
-from aioartifactory import AIOArtifactory
-from aioartifactory import RemotePath
-
+from aioartifactory import AIOArtifactory, LocalPath, RemotePath
 
 ARTIFACTORY_API_KEY = os.environ.get("ARTIFACTORY_API_KEY")
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
@@ -20,14 +17,13 @@ CURRENT_WORK_PATH = Path().cwd()
 
 # Configure test_logger
 tealogger.configure(
-    configuration=CURRENT_MODULE_PATH.parent / "tealogger.json"
+    configuration=CURRENT_MODULE_PATH.parent / "aioartifactory" / "tealogger.json"
 )
 test_logger = tealogger.get_logger("test.aioartifactory")
 
 
 class TestAIOArtifactory:
-    """Test Asynchronous Input Output (AIO) Artifactory Class
-    """
+    """Test Asynchronous Input Output (AIO) Artifactory Class"""
 
     # @pytest.mark.asyncio
     # async def test_host(self, host: str):
@@ -44,7 +40,7 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_deploy_one_source_simple(
         self,
-        source: PathLike,
+        source: str | LocalPath,
         destination: str,
     ):
         """Test Deploy One Source Simple
@@ -71,15 +67,12 @@ class TestAIOArtifactory:
         for upload in upload_list:
             # test_logger.debug(f"Upload: {upload}")
 
-            assert await RemotePath(
-                path=upload,
-                api_key=ARTIFACTORY_API_KEY
-            ).exists()
+            assert await RemotePath(path=upload, api_key=ARTIFACTORY_API_KEY).exists()
 
     @pytest.mark.asyncio
     async def test_deploy_one_source_recursive(
         self,
-        source: PathLike,
+        source: str | LocalPath,
         destination: str,
     ):
         """Test Deploy One Source Recursive
@@ -107,7 +100,7 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_deploy_one_artifact(
         self,
-        source: PathLike,
+        source: str | LocalPath,
         destination: str,
     ):
         """Test Deploy One Artifact"""
@@ -131,7 +124,7 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_deploy_one_artifact_property(
         self,
-        source: PathLike,
+        source: str | LocalPath,
         destination: str,
         property: dict,
     ):
@@ -158,8 +151,8 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_retrieve_one_source_simple(
         self,
-        source: str,
-        destination: PathLike,
+        source: str | LocalPath,
+        destination: str | RemotePath,
     ):
         """Test Retrieve One Source Simple
 
@@ -187,8 +180,8 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_retrieve_one_source_recursive(
         self,
-        source: str,
-        destination: PathLike,
+        source: str | LocalPath,
+        destination: str | RemotePath,
     ):
         """Test Retrieve One Source Recursive
 
@@ -215,8 +208,8 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_retrieve_one_artifact(
         self,
-        source: str,
-        destination: PathLike,
+        source: str | LocalPath,
+        destination: str | RemotePath,
     ):
         """Test Retrieve One Artifact
 
@@ -244,8 +237,8 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_retrieve_many_artifact(
         self,
-        source: list[str],
-        destination: list[PathLike],
+        source: list[str | LocalPath],
+        destination: list[str | RemotePath],
     ):
         """Test Retrieve Many Artifact"""
 
