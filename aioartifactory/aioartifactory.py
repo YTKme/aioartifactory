@@ -86,8 +86,8 @@ class AIOArtifactory:
 
     async def deploy(
         self,
-        source: str | list[str] | LocalPath | list[LocalPath],
-        destination: str | list[str] | RemotePath | list[RemotePath],
+        source: str | LocalPath | list[str | LocalPath],
+        destination: str | RemotePath | list[str | RemotePath],
         property: dict | None = None,
         recursive: bool = False,
         quiet: bool = False,
@@ -96,9 +96,9 @@ class AIOArtifactory:
         """Deploy
 
         :param source: The source (Local) path(s)
-        :type source: str | list[str] | LocalPath | list[LocalPath]
+        :type source: str | LocalPath | list[str | LocalPath]
         :param destination: The destination (Remote) path(s)
-        :type destination: str | list[str] | RemotePath | list[RemotePath]
+        :type destination: str | RemotePath | list[str | RemotePath]
         :param property: The property(ies) metadata for the artifact(s),
             defaults to None
         :type property: dict, optional
@@ -145,8 +145,8 @@ class AIOArtifactory:
 
     async def _deploy(
         self,
-        source_list: list[str] | list[LocalPath],
-        destination_list: list[str] | list[RemotePath],
+        source_list: list[str | LocalPath],
+        destination_list: list[str | RemotePath],
         property_dictionary: dict | None,
         upload_queue: Queue,
         session: ClientSession,
@@ -260,7 +260,7 @@ class AIOArtifactory:
 
     async def _upload_task(
         self,
-        destination_list: list[str] | list[RemotePath],
+        destination_list: list[str | RemotePath],
         property_dictionary: dict | None,
         upload_queue: Queue,
         upload_list: list[PathLike],
@@ -269,7 +269,7 @@ class AIOArtifactory:
         """Upload Task
 
         :param destination_list: The destination list
-        :type destination_list: list[str] | list[RemotePath]
+        :type destination_list: list[str | RemotePath]
         :param property_dictionary: The property(ies) metadata for the
             artifact(s)
         :type property_dictionary: dict
@@ -340,8 +340,8 @@ class AIOArtifactory:
 
     async def retrieve(
         self,
-        source: str | list[str],
-        destination: PathLike | list[PathLike],
+        source: str | LocalPath | list[str | LocalPath],
+        destination: str | RemotePath | list[str | RemotePath],
         recursive: bool = False,
         output_repository: bool = False,
         quiet: bool = False,
@@ -398,8 +398,8 @@ class AIOArtifactory:
 
     async def _retrieve(
         self,
-        source_list: list[str],
-        destination_list: list[PathLike],
+        source_list: list[str | LocalPath],
+        destination_list: list[str | RemotePath],
         download_queue: Queue,
         session: ClientSession,
         recursive: bool,
@@ -518,7 +518,7 @@ class AIOArtifactory:
 
     async def _download_task(
         self,
-        destination_list: list[PathLike],
+        destination_list: list[str | RemotePath],
         download_queue: Queue,
         download_list: list[str],
         session: ClientSession,
@@ -527,7 +527,7 @@ class AIOArtifactory:
         """Download Task
 
         :param destination_list: The destination list
-        :type destination_list: list[PathLike]
+        :type destination_list: list[str | RemotePath]
         :param download_queue: The download queue
         :type download_queue: Queue
         :param download_list: The download list store what is downloaded
@@ -579,7 +579,7 @@ class AIOArtifactory:
                         async for chunk, _ in response.content.iter_chunks():
                             await file.write(chunk)
 
-                    download_list.append(destination_path)
+                    download_list.append(str(destination_path))
 
             # logger.info(f"Completed: {destination_path}")
 
@@ -591,7 +591,7 @@ class AIOArtifactory:
         self,
         source: str,
         property: dict,
-        repository: list | None = None,
+        repository: list = [],
     ) -> AsyncGenerator[str, None]:
         """Search Property
 
@@ -658,7 +658,6 @@ class AIOArtifactory:
         :param exception_traceback: The exception traceback
         :type exception_traceback: Optional[TracebackType]
         """
-        await super()
 
         if self._client_session:
             await self._client_session.close()
