@@ -4,9 +4,10 @@ python-downloads = "never"
 [[index]]
 name = "pypi"
 url = "https://pypi.org/simple"
-publish-url = "https://pypi.org"
+# publish-url = "https://upload.pypi.org/legacy"
+publish-url = "https://pypi.python.org/pypi"
 
 [[index]]
-name = "test-pypi"
+name = "testpypi"
 url = "https://test.pypi.org/simple"
-publish-url = "https://test.pypi.org"
+publish-url = "https://test.pypi.org/legacy"
