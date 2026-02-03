@@ -40,8 +40,8 @@ class TestLocalPath:
 
         local_path = LocalPath(path=path)
 
-        logger.debug(f"Local Path __str__: {str(local_path)}")
-        logger.debug(f"Local Path __repr__: {repr(local_path)}")
+        # logger.debug(f"Local Path __str__: {str(local_path)}")
+        # logger.debug(f"Local Path __repr__: {repr(local_path)}")
 
         assert isinstance(local_path, Path)
 
@@ -203,6 +203,47 @@ class TestLocalPath:
     ########
     # Mock #
     ########
+
+    @pytest.mark.mock
+    def test_construct_mock(self, mocker: MockerFixture):
+        """Test Construct Mock"""
+
+        # Mock Local Path Constructor
+        mock_local_path_constructor = mocker.patch(
+            "aioartifactory.localpath.LocalPath.__init__",
+            return_value=None,
+        )
+
+        # Execute Local Path Constructor
+        local_path = LocalPath(path=".")
+
+        # logger.debug(f"Local Path __str__: {str(local_path)}")
+        # logger.debug(f"Local Path __repr__: {repr(local_path)}")
+
+        # Assert
+        mock_local_path_constructor.assert_called_once_with(path=".")
+        assert isinstance(local_path, Path)
+
+    @pytest.mark.mock
+    def test_md5_mock(self, mocker: MockerFixture):
+        """Test MD5 Mock"""
+
+        # Mock Local Path MD5
+        mock_md5 = mocker.patch(
+            "aioartifactory.localpath.LocalPath.md5",
+            new_callable=mocker.PropertyMock,
+        )
+        mock_md5.return_value = "92c6b751585b0ff74f10f66c0534ed7a"
+
+        # Execute Local Path MD5
+        local_path = LocalPath(path=".")
+        md5_checksum = local_path.md5
+
+        # logger.debug(f"Local Path MD5: {md5_checksum}")
+
+        # Assert
+        mock_md5.assert_called_once()
+        assert md5_checksum == "92c6b751585b0ff74f10f66c0534ed7a"
 
     @pytest.mark.mock
     def test_get_file_list_mock(
