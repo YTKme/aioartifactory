@@ -71,5 +71,6 @@
     "--experimental",
     "--ignore=E501",
     // "--max-line-length", "120",
-  ]
+  ],
+  "python.defaultInterpreterPath": ".venv/bin/python"
 }
