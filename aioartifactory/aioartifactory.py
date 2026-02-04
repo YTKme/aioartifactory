@@ -6,7 +6,6 @@ Asynchronous Input Output (AIO) Artifactory
 import os
 from asyncio import BoundedSemaphore, Queue, TaskGroup
 from collections.abc import AsyncGenerator
-from os import PathLike
 from pathlib import Path
 from types import TracebackType
 from typing import Optional, Type
@@ -257,16 +256,17 @@ class AIOArtifactory:
             else:
                 for file in source_path.get_file_list(recursive=recursive):
                     relative_path = os.path.relpath(file, start=source_path)
-                    local_path = source_path / relative_path
+                    # local_path = source_path / relative_path
                     # Enqueue the upload queue
-                    await upload_queue.put(local_path)
+                    # TODO: Is there a better way for this...?
+                    await upload_queue.put((source_path, relative_path))
 
     async def _upload_task(
         self,
         destination_list: list[str | RemotePath],
         property_dictionary: dict | None,
         upload_queue: Queue,
-        upload_list: list[PathLike],
+        upload_list: list[RemotePath],
         session: ClientSession,
     ) -> None:
         """Upload Task
@@ -279,7 +279,7 @@ class AIOArtifactory:
         :param upload_queue: The upload queue
         :type upload_queue: Queue
         :param upload_list: The upload list, store what is uploaded
-        :type upload_list: list[PathLike]
+        :type upload_list: list[RemotePath]
         :param session: The current session
         :type session: ClientSession
         """
@@ -291,28 +291,33 @@ class AIOArtifactory:
             if upload is None:
                 break
 
-            logger.info(f"Upload: {upload}, Type: {type(upload)}")
+            source_path, relative_path = upload
+            upload_path: LocalPath = source_path / relative_path
+            logger.warning(f"Source Path: {source_path}")
+            logger.warning(f"Relative Path: {relative_path}")
+
+            logger.info(f"Upload: {upload_path}, Type: {type(upload_path)}")
             logger.debug(f"Destination List: {destination_list}")
             # logger.debug(f"Property Dictionary: {property_dictionary}")
 
-            local_path = LocalPath(path=upload)
+            local_path = LocalPath(path=upload_path)
             # logger.debug(f"Local Path: {local_path}")
             # Parse the filename, account for Universal Naming Convention (UNC) path
-            local_path_name = (
-                local_path.name
-                if local_path.name
-                else str(local_path.expanduser().resolve()).split("/")[-1]
-            )
+            # local_path_name = (
+            #     local_path.name
+            #     if local_path.name
+            #     else str(local_path.expanduser().resolve()).split("/")[-1]
+            # )
             # logger.debug(f"Local Path Name: {local_path_name}")
 
             # Upload the file
-            logger.debug(f"Uploading: {upload}")
+            logger.debug(f"Uploading: {upload_path}")
 
             with open(local_path, "rb") as file:
                 for destination in destination_list:
                     logger.debug(f"Destination: {destination}")
 
-                    remote_path = RemotePath(path=f"{destination}/{local_path_name}")
+                    remote_path = RemotePath(path=f"{destination}/{relative_path}")
                     if property_dictionary:
                         # logger.debug(f"Property Dictionary: {property_dictionary}")
                         remote_path.parameter = property_dictionary
