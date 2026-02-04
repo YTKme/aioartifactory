@@ -41,7 +41,7 @@ class TestAIOArtifactory:
     async def test_deploy_one_source_simple(
         self,
         source: str | LocalPath,
-        destination: str,
+        destination: str | RemotePath,
     ):
         """Test Deploy One Source Simple
 

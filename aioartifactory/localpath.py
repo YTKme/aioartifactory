@@ -56,8 +56,8 @@ class LocalPath(Path):
         # NOTE: Backward compatibility for 3.11, remove in Python 3.12
         if sys.version_info < (3, 12):
             super().__init__(*args)
-        else:
-            super().__init__(path, *args)
+        # else:
+        #     super().__init__(path, *args)
 
         self._path = path
 

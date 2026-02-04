@@ -95,7 +95,10 @@ class AIOArtifactory:
     ):
         """Deploy
 
-        :param source: The source (Local) path(s)
+        Deploy (upload) artifact file(s) to Artifactory.
+
+        :param source: The source (Local) path(s), can be relative or
+            absolute path(s)
         :type source: str | LocalPath | list[str | LocalPath]
         :param destination: The destination (Remote) path(s)
         :type destination: str | RemotePath | list[str | RemotePath]
@@ -294,6 +297,13 @@ class AIOArtifactory:
 
             local_path = LocalPath(path=upload)
             # logger.debug(f"Local Path: {local_path}")
+            # Parse the filename, account for Universal Naming Convention (UNC) path
+            local_path_name = (
+                local_path.name
+                if local_path.name
+                else str(local_path.expanduser().resolve()).split("/")[-1]
+            )
+            # logger.debug(f"Local Path Name: {local_path_name}")
 
             # Upload the file
             logger.debug(f"Uploading: {upload}")
@@ -302,7 +312,7 @@ class AIOArtifactory:
                 for destination in destination_list:
                     logger.debug(f"Destination: {destination}")
 
-                    remote_path = RemotePath(path=f"{destination}/{local_path}")
+                    remote_path = RemotePath(path=f"{destination}/{local_path_name}")
                     if property_dictionary:
                         # logger.debug(f"Property Dictionary: {property_dictionary}")
                         remote_path.parameter = property_dictionary
