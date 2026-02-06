@@ -164,6 +164,7 @@ class AIOArtifactory:
         # Deploy
         async with TaskGroup() as group:
             # Optimize maximum connection
+            # TODO: This need to be fixed...incorrect upload size?
             connection_count = min(len(source_list), DEFAULT_MAXIMUM_CONNECTION)
 
             # Create `connection_count` of `_deploy_query` worker task(s)
@@ -293,11 +294,11 @@ class AIOArtifactory:
 
             source_path, relative_path = upload
             upload_path: LocalPath = source_path / relative_path
-            logger.warning(f"Source Path: {source_path}")
-            logger.warning(f"Relative Path: {relative_path}")
+            # logger.debug(f"Source Path: {source_path}")
+            # logger.debug(f"Relative Path: {relative_path}")
 
-            logger.info(f"Upload: {upload_path}, Type: {type(upload_path)}")
-            logger.debug(f"Destination List: {destination_list}")
+            # logger.info(f"Upload: {upload_path}, Type: {type(upload_path)}")
+            # logger.debug(f"Destination List: {destination_list}")
             # logger.debug(f"Property Dictionary: {property_dictionary}")
 
             local_path = LocalPath(path=upload_path)
@@ -347,7 +348,7 @@ class AIOArtifactory:
                         data = await response.json()
                         upload_list.append(data["downloadUri"])
 
-            logger.info(f"Completed: {upload}")
+            logger.info(f"Uploaded: {upload}")
 
     # --------
     # Retrieve
@@ -597,6 +598,210 @@ class AIOArtifactory:
                     download_list.append(str(destination_path))
 
             # logger.info(f"Completed: {destination_path}")
+
+    # ------
+    # Delete
+    # ------
+
+    async def delete(
+        self,
+        source: str | RemotePath | list[str | RemotePath],
+        recursive: bool = False,
+    ) -> list[str]:
+        """Delete
+
+        Delete artifact file(s) from Artifactory.
+
+        :param source: The source (Remote) path(s)
+        :type source: str | RemotePath | list[str | RemotePath]
+        :param recursive: Whether to recursively delete artifact(s),
+            defaults to False
+        :type recursive: bool, optional
+        """
+
+        if not isinstance(source, list):
+            source = [source]
+
+        if self._client_session:
+            client_session = self._client_session
+        else:
+            client_session = ClientSession(
+                connector=TCPConnector(
+                    limit_per_host=DEFAULT_MAXIMUM_CONNECTION,
+                    ssl=self._ssl,
+                ),
+                timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
+            )
+
+        async with client_session as session:
+            return await self._delete(
+                source_list=source,
+                session=session,
+                recursive=recursive,
+            )
+
+    async def _delete(
+        self,
+        source_list: list[str | RemotePath],
+        session: ClientSession,
+        recursive: bool,
+    ) -> list[str]:
+        """Delete
+
+        Delete artifact file(s) from Artifactory.
+        :param source_list: The source (Remote) path(s)
+        :type source_list: list[str | RemotePath]
+        :param session: The current session
+        :type session: ClientSession
+        :param recursive: Whether to recursively delete artifact(s)
+        :type recursive: bool
+        """
+
+        # Create a `source_queue` to store the `source_list` to delete
+        source_queue = Queue()
+
+        query_queue = Queue()
+
+        # Query
+        async with TaskGroup() as group:
+            # Optimize maximum connection
+            connection_count = min(len(source_list), DEFAULT_MAXIMUM_CONNECTION)
+
+            # Create `connection_count` of `_delete_task` worker task(s)
+            # Store them in a `task_list`
+
+            _ = [
+                group.create_task(
+                    self._query_remote_task(
+                        source_queue=source_queue,
+                        query_queue=query_queue,
+                        recursive=recursive,
+                    )
+                )
+                for _ in range(connection_count)
+            ]
+
+            # Enqueue the `source` to the `source_queue`
+            for source in source_list:
+                await source_queue.put(source)
+
+            # Enqueue a `None` signal for worker(s) to exit
+            for _ in range(connection_count):
+                await source_queue.put(None)
+
+        # Initialize a `delete_list` to store individual artifact files deleted
+        delete_list = []
+
+        # Delete
+        async with TaskGroup() as group:
+            # Optimize maximum connection
+            connection_count = min(query_queue.qsize(), DEFAULT_MAXIMUM_CONNECTION)
+
+            # Create `connection_count` of `_delete_task` worker task(s)
+            # Store them in a `task_list`
+            for count in range(connection_count):
+                group.create_task(
+                    self._delete_task(
+                        source_queue=query_queue,
+                        delete_list=delete_list,
+                        session=session,
+                    )
+                )
+
+            # Enqueue a `None` signal for worker(s) to exit
+            for _ in range(connection_count):
+                await query_queue.put(None)
+
+        return delete_list
+
+    async def _query_remote_task(
+        self,
+        source_queue: Queue,
+        query_queue: Queue,
+        recursive: bool,
+    ):
+        """Query Remote Task
+
+        :param source_queue: The source queue
+        :type source_queue: Queue
+        :param query_queue: The query queue, store the query result
+        :type query_queue: Queue
+        :param recursive: Whether to recursively query artifact(s)
+        :type recursive: bool
+        """
+
+        while True:
+            source = await source_queue.get()
+
+            # The signal to exit (check at the beginning)
+            if source is None:
+                break
+
+            logger.debug(f"Query Source: {source}, Type: {type(source)}")
+
+            # NOTE: Need To Check On This...
+            remote_path = (
+                source
+                if isinstance(source, RemotePath)
+                else RemotePath(
+                    path=source,
+                    api_key=self._api_key,
+                    ssl=self._ssl,
+                )
+            )
+
+            async for file in remote_path.get_file_list(recursive=recursive):
+                await query_queue.put(f"{str(source).rstrip('/')}{file}")
+
+    async def _delete_task(
+        self,
+        source_queue: Queue,
+        delete_list: list[str],
+        session: ClientSession,
+    ):
+        """Delete Task
+
+        :param source_queue: The source queue
+        :type source_queue: Queue
+        """
+        while True:
+            source = await source_queue.get()
+
+            # The signal to exit (check at the beginning)
+            if source is None:
+                break
+
+            logger.debug(f"Delete: {source}, Type: {type(source)}")
+
+            # NOTE: Need To Check On This...
+            remote_path = (
+                source
+                if isinstance(source, RemotePath)
+                else RemotePath(
+                    path=source,
+                    api_key=self._api_key,
+                    ssl=self._ssl,
+                )
+            )
+
+            # remote_path = RemotePath(
+            #     path=str(source),
+            #     api_key=self._api_key,
+            #     ssl=self._ssl,
+            # )
+
+            async with session.delete(
+                url=str(remote_path),
+                headers=self._header,
+            ) as response:
+                if response.status != 204:
+                    logger.error(f"Delete Failed: {remote_path}")
+                    raise RuntimeError(f"Delete Failed: {remote_path}")
+
+                # TODO: Return str or RemotePath...?
+                delete_list.append(str(remote_path))
+
+                logger.info(f"Deleted: {remote_path}")
 
     # ------
     # Search
