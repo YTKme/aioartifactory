@@ -180,6 +180,7 @@ class TestAIOArtifactory:
         upload_list = await aioartifactory.deploy(
             source=source,
             destination=destination,
+            recursive=False,
         )
         logger.debug(f"Upload List: {upload_list}")
 

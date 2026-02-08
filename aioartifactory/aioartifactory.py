@@ -253,7 +253,8 @@ class AIOArtifactory:
             # Enqueue the deploy query response
             # The `upload_queue` should be relative path
             if source_path.is_file():
-                await upload_queue.put(source_path)
+                before, _, after = str(source_path).rpartition(os.sep)
+                await upload_queue.put((before, after))
             else:
                 for file in source_path.get_file_list(recursive=recursive):
                     relative_path = os.path.relpath(file, start=source_path)
@@ -293,9 +294,9 @@ class AIOArtifactory:
                 break
 
             source_path, relative_path = upload
-            upload_path: LocalPath = source_path / relative_path
-            # logger.debug(f"Source Path: {source_path}")
-            # logger.debug(f"Relative Path: {relative_path}")
+            upload_path: LocalPath = LocalPath(source_path) / relative_path
+            logger.warning(f"Source Path: {source_path}")
+            logger.warning(f"Relative Path: {relative_path}")
 
             # logger.info(f"Upload: {upload_path}, Type: {type(upload_path)}")
             # logger.debug(f"Destination List: {destination_list}")
@@ -340,7 +341,7 @@ class AIOArtifactory:
                         headers=self._header,
                         data=file,
                     ) as response:
-                        # logger.debug(f"Response: {response}")
+                        logger.debug(f"Response: {response}")
                         if response.status != 201:
                             logger.error(f"Upload Failed: {remote_path}")
                             raise RuntimeError(f"Upload Failed: {remote_path}")
