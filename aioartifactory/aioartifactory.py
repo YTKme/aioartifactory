@@ -295,8 +295,8 @@ class AIOArtifactory:
 
             source_path, relative_path = upload
             upload_path: LocalPath = LocalPath(source_path) / relative_path
-            logger.warning(f"Source Path: {source_path}")
-            logger.warning(f"Relative Path: {relative_path}")
+            # logger.debug(f"Source Path: {source_path}")
+            # logger.debug(f"Relative Path: {relative_path}")
 
             # logger.info(f"Upload: {upload_path}, Type: {type(upload_path)}")
             # logger.debug(f"Destination List: {destination_list}")
