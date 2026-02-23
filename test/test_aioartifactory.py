@@ -221,8 +221,8 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_retrieve_one_source_simple(
         self,
-        source: str | LocalPath,
-        destination: str | RemotePath,
+        source: str | RemotePath,
+        destination: str | LocalPath,
     ):
         """Test Retrieve One Source Simple
 
@@ -251,8 +251,8 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_retrieve_one_source_recursive(
         self,
-        source: str | LocalPath,
-        destination: str | RemotePath,
+        source: str | RemotePath,
+        destination: str | LocalPath,
     ):
         """Test Retrieve One Source Recursive
 
@@ -280,8 +280,8 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_retrieve_one_artifact(
         self,
-        source: str | LocalPath,
-        destination: str | RemotePath,
+        source: str | RemotePath,
+        destination: str | LocalPath,
     ):
         """Test Retrieve One Artifact
 
@@ -310,8 +310,8 @@ class TestAIOArtifactory:
     @pytest.mark.asyncio
     async def test_retrieve_many_artifact(
         self,
-        source: list[str | LocalPath],
-        destination: list[str | RemotePath],
+        source: list[str | RemotePath],
+        destination: list[str | LocalPath],
     ):
         """Test Retrieve Many Artifact"""
 
