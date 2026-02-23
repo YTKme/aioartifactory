@@ -475,7 +475,7 @@ class RemotePath(PurePath):
             query = f"{query}repos={','.join(repository)}"
         else:
             query = query[:-1]
-        # logger.debug(f"Query: {query}")
+        logger.debug(f"Query: {query}")
 
         async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
             try:

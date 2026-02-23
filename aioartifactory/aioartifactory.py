@@ -357,8 +357,8 @@ class AIOArtifactory:
 
     async def retrieve(
         self,
-        source: str | LocalPath | list[str | LocalPath],
-        destination: str | RemotePath | list[str | RemotePath],
+        source: str | RemotePath | list[str | RemotePath],
+        destination: str | LocalPath | list[str | LocalPath],
         recursive: bool = False,
         output_repository: bool = False,
         quiet: bool = False,
@@ -366,9 +366,9 @@ class AIOArtifactory:
         """Retrieve
 
         :param source: The source (Remote) path(s)
-        :type source: str | list[str]
+        :type source: str | RemotePath | list[str | RemotePath]
         :param destination: The destination (Local) path(s)
-        :type destination: str | list[str]
+        :type destination: str | LocalPath | list[str | LocalPath]
         :param recursive: Whether to recursively retrieve artifact(s),
             defaults to False
         :type recursive: bool, optional
@@ -415,8 +415,8 @@ class AIOArtifactory:
 
     async def _retrieve(
         self,
-        source_list: list[str | LocalPath],
-        destination_list: list[str | RemotePath],
+        source_list: list[str | RemotePath],
+        destination_list: list[str | LocalPath],
         download_queue: Queue,
         session: ClientSession,
         recursive: bool,
@@ -535,7 +535,7 @@ class AIOArtifactory:
 
     async def _download_task(
         self,
-        destination_list: list[str | RemotePath],
+        destination_list: list[str | LocalPath],
         download_queue: Queue,
         download_list: list[str],
         session: ClientSession,
@@ -544,7 +544,7 @@ class AIOArtifactory:
         """Download Task
 
         :param destination_list: The destination list
-        :type destination_list: list[str | RemotePath]
+        :type destination_list: list[str | LocalPath]
         :param download_queue: The download queue
         :type download_queue: Queue
         :param download_list: The download list store what is downloaded
