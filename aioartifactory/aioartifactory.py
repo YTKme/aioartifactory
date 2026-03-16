@@ -752,7 +752,10 @@ class AIOArtifactory:
             )
 
             async for file in remote_path.get_file_list(recursive=recursive):
-                await query_queue.put(f"{str(source).rstrip('/')}{file}")
+                if not await remote_path.folder:
+                    await query_queue.put(source)
+                else:
+                    await query_queue.put(f"{str(source).rstrip('/')}{file}")
 
     async def _delete_task(
         self,
