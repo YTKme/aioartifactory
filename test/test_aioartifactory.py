@@ -373,6 +373,36 @@ class TestAIOArtifactory:
 
     @pytest.mark.real
     @pytest.mark.asyncio
+    async def test_delete_one_artifact(
+        self,
+        source: str,
+        destination: str,
+    ):
+        """Test Delete One Artifact"""
+
+        logger.debug(f"Source: {source}")
+        logger.debug(f"Destination: {destination}")
+
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+
+        upload_list = await aioartifactory.deploy(
+            source=source,
+            destination=destination,
+            recursive=False,
+        )
+        logger.debug(f"Upload List: {upload_list}")
+
+        filename = source.split("/")[-1]
+        logger.debug(f"Filename: {filename}")
+
+        delete_list = await aioartifactory.delete(
+            source=f"{destination}/{filename}",
+            recursive=False,
+        )
+        logger.debug(f"Delete List: {delete_list}")
+
+    @pytest.mark.real
+    @pytest.mark.asyncio
     async def test_search_property_simple(
         self,
         source: str,
