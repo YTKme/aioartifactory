@@ -5,7 +5,7 @@ Asynchronous Input Output (AIO) Artifactory
 
 import os
 from asyncio import BoundedSemaphore, Queue, TaskGroup
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Sequence
 from pathlib import Path
 from types import TracebackType
 from typing import Optional, Type
@@ -85,8 +85,8 @@ class AIOArtifactory:
 
     async def deploy(
         self,
-        source: str | LocalPath | list[str | LocalPath],
-        destination: str | RemotePath | list[str | RemotePath],
+        source: str | LocalPath | Sequence[str | LocalPath],
+        destination: str | RemotePath | Sequence[str | RemotePath],
         property: dict | None = None,
         recursive: bool = False,
         quiet: bool = False,
@@ -98,9 +98,9 @@ class AIOArtifactory:
 
         :param source: The source (Local) path(s), can be relative or
             absolute path(s)
-        :type source: str | LocalPath | list[str | LocalPath]
+        :type source: str | LocalPath | Sequence[str | LocalPath]
         :param destination: The destination (Remote) path(s)
-        :type destination: str | RemotePath | list[str | RemotePath]
+        :type destination: str | RemotePath | Sequence[str | RemotePath]
         :param property: The property(ies) metadata for the artifact(s),
             defaults to None
         :type property: dict, optional
@@ -118,9 +118,9 @@ class AIOArtifactory:
         upload_queue = Queue()
 
         # TODO: Convert one to many...for now
-        if not isinstance(source, list):
+        if isinstance(source, (str, LocalPath)):
             source = [source]
-        if not isinstance(destination, list):
+        if isinstance(destination, (str, RemotePath)):
             destination = [destination]
 
         if self._client_session:
@@ -147,8 +147,8 @@ class AIOArtifactory:
 
     async def _deploy(
         self,
-        source_list: list[str | LocalPath],
-        destination_list: list[str | RemotePath],
+        source_list: Sequence[str | LocalPath],
+        destination_list: Sequence[str | RemotePath],
         property_dictionary: dict | None,
         upload_queue: Queue,
         session: ClientSession,
@@ -265,7 +265,7 @@ class AIOArtifactory:
 
     async def _upload_task(
         self,
-        destination_list: list[str | RemotePath],
+        destination_list: Sequence[str | RemotePath],
         property_dictionary: dict | None,
         upload_queue: Queue,
         upload_list: list[RemotePath],
@@ -274,7 +274,7 @@ class AIOArtifactory:
         """Upload Task
 
         :param destination_list: The destination list
-        :type destination_list: list[str | RemotePath]
+        :type destination_list: Sequence[str | RemotePath]
         :param property_dictionary: The property(ies) metadata for the
             artifact(s)
         :type property_dictionary: dict
@@ -357,8 +357,8 @@ class AIOArtifactory:
 
     async def retrieve(
         self,
-        source: str | RemotePath | list[str | RemotePath],
-        destination: str | LocalPath | list[str | LocalPath],
+        source: str | RemotePath | Sequence[str | RemotePath],
+        destination: str | LocalPath | Sequence[str | LocalPath],
         recursive: bool = False,
         output_repository: bool = False,
         quiet: bool = False,
@@ -366,9 +366,9 @@ class AIOArtifactory:
         """Retrieve
 
         :param source: The source (Remote) path(s)
-        :type source: str | RemotePath | list[str | RemotePath]
+        :type source: str | RemotePath | Sequence[str | RemotePath]
         :param destination: The destination (Local) path(s)
-        :type destination: str | LocalPath | list[str | LocalPath]
+        :type destination: str | LocalPath | Sequence[str | LocalPath]
         :param recursive: Whether to recursively retrieve artifact(s),
             defaults to False
         :type recursive: bool, optional
@@ -386,9 +386,9 @@ class AIOArtifactory:
         download_queue = Queue()
 
         # TODO: Convert one to many...for now
-        if not isinstance(source, list):
+        if isinstance(source, (str, RemotePath)):
             source = [source]
-        if not isinstance(destination, list):
+        if isinstance(destination, (str, LocalPath)):
             destination = [destination]
 
         if self._client_session:
@@ -415,8 +415,8 @@ class AIOArtifactory:
 
     async def _retrieve(
         self,
-        source_list: list[str | RemotePath],
-        destination_list: list[str | LocalPath],
+        source_list: Sequence[str | RemotePath],
+        destination_list: Sequence[str | LocalPath],
         download_queue: Queue,
         session: ClientSession,
         recursive: bool,
@@ -535,7 +535,7 @@ class AIOArtifactory:
 
     async def _download_task(
         self,
-        destination_list: list[str | LocalPath],
+        destination_list: Sequence[str | LocalPath],
         download_queue: Queue,
         download_list: list[str],
         session: ClientSession,
@@ -544,7 +544,7 @@ class AIOArtifactory:
         """Download Task
 
         :param destination_list: The destination list
-        :type destination_list: list[str | LocalPath]
+        :type destination_list: Sequence[str | LocalPath]
         :param download_queue: The download queue
         :type download_queue: Queue
         :param download_list: The download list store what is downloaded
@@ -606,7 +606,7 @@ class AIOArtifactory:
 
     async def delete(
         self,
-        source: str | RemotePath | list[str | RemotePath],
+        source: str | RemotePath | Sequence[str | RemotePath],
         recursive: bool = False,
     ) -> list[str]:
         """Delete
@@ -614,13 +614,13 @@ class AIOArtifactory:
         Delete artifact file(s) from Artifactory.
 
         :param source: The source (Remote) path(s)
-        :type source: str | RemotePath | list[str | RemotePath]
+        :type source: str | RemotePath | Sequence[str | RemotePath]
         :param recursive: Whether to recursively delete artifact(s),
             defaults to False
         :type recursive: bool, optional
         """
 
-        if not isinstance(source, list):
+        if isinstance(source, (str, RemotePath)):
             source = [source]
 
         if self._client_session:
@@ -643,7 +643,7 @@ class AIOArtifactory:
 
     async def _delete(
         self,
-        source_list: list[str | RemotePath],
+        source_list: Sequence[str | RemotePath],
         session: ClientSession,
         recursive: bool,
     ) -> list[str]:
@@ -651,7 +651,7 @@ class AIOArtifactory:
 
         Delete artifact file(s) from Artifactory.
         :param source_list: The source (Remote) path(s)
-        :type source_list: list[str | RemotePath]
+        :type source_list: Sequence[str | RemotePath]
         :param session: The current session
         :type session: ClientSession
         :param recursive: Whether to recursively delete artifact(s)
