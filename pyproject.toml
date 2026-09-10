@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build >= 0.9.21, <0.10.0"]
+requires = ["uv_build>=0.12.13,<0.13"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
@@ -20,7 +20,7 @@ publish-url = "https://test.pypi.org/legacy"
 
 [project]
 name = "aioartifactory"
-version = "0.1.25"
+version = "0.1.26"
 description = "Asynchronous Input Output (AIO) Artifactory"
 keywords = ["aioartifactory", "artifactory"]
 readme = "README.md"
