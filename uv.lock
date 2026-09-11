@@ -9,7 +9,7 @@ resolution-markers = [
 
 [[package]]
 name = "aioartifactory"
-version = "0.1.26"
+version = "0.1.27"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
