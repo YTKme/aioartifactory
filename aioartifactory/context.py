@@ -3,12 +3,8 @@ Context
 ~~~~~~~
 """
 
+from collections.abc import Callable
 from types import TracebackType
-from typing import (
-    Callable,
-    Optional,
-    Type,
-)
 
 
 class TeardownContextManager:
@@ -25,9 +21,9 @@ class TeardownContextManager:
 
     def __exit__(
         self,
-        exception_type: Optional[Type[BaseException]],
-        exception_value: Optional[BaseException],
-        exception_traceback: Optional[TracebackType],
+        exception_type: type[BaseException] | None,
+        exception_value: BaseException | None,
+        exception_traceback: TracebackType | None,
     ):
         for function in self._function_list:
             function()
