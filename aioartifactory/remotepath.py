@@ -107,7 +107,7 @@ class RemotePath(PurePath):
         # if self._parse_url.params:
         #     self._path = self._path.replace(self._parse_url.params, value)
 
-        #
+        # Update parameter
         self._parse_url = self._parse_url._replace(
             params=";".join(
                 [f"{key}={value}" for key, value in value_dictionary.items()]
@@ -156,14 +156,7 @@ class RemotePath(PurePath):
         """
 
         return unquote(
-            "".join(
-                [
-                    self._parse_url.scheme,
-                    "://",
-                    self._parse_url.netloc,
-                    "/artifactory/api/search/prop",
-                ]
-            )
+            f"{self._parse_url.scheme}://{self._parse_url.netloc}/artifactory/api/search/prop"
         )
 
     @property
@@ -180,14 +173,16 @@ class RemotePath(PurePath):
 
         query = "list"
 
-        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
-            async with session.get(
+        async with (
+            ClientSession(connector=TCPConnector(ssl=self._ssl)) as session,
+            session.get(
                 url=f"{storage_api_url}?{query}",
                 headers=self._header,
-            ) as response:
-                # logger.debug(f"Response: {await response.json()}")
-                if response.status == 400:
-                    return False
+            ) as response,
+        ):
+            # logger.debug(f"Response: {await response.json()}")
+            if response.status == 400:
+                return False
 
         return True
 
@@ -204,13 +199,15 @@ class RemotePath(PurePath):
         storage_api_url = self._get_storage_api_url()
         # logger.debug(f"Storage API URL: {storage_api_url}")
 
-        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
-            async with session.get(
+        async with (
+            ClientSession(connector=TCPConnector(ssl=self._ssl)) as session,
+            session.get(
                 url=storage_api_url,
                 headers=self._header,
-            ) as response:
-                # logger.warning(f"Response: {await response.json()}")
-                data = await response.json()
+            ) as response,
+        ):
+            # logger.warning(f"Response: {await response.json()}")
+            data = await response.json()
 
         return data["checksums"]["md5"]
 
@@ -227,12 +224,14 @@ class RemotePath(PurePath):
         storage_api_url = self._get_storage_api_url()
         # logger.debug(f"Storage API URL: {storage_api_url}")
 
-        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
-            async with session.get(
+        async with (
+            ClientSession(connector=TCPConnector(ssl=self._ssl)) as session,
+            session.get(
                 url=storage_api_url,
                 headers=self._header,
-            ) as response:
-                data = await response.json()
+            ) as response,
+        ):
+            data = await response.json()
 
         return data["checksums"]["sha1"]
 
@@ -249,12 +248,14 @@ class RemotePath(PurePath):
         storage_api_url = self._get_storage_api_url()
         # logger.debug(f"Storage API URL: {storage_api_url}")
 
-        async with ClientSession(connector=TCPConnector(ssl=self._ssl)) as session:
-            async with session.get(
+        async with (
+            ClientSession(connector=TCPConnector(ssl=self._ssl)) as session,
+            session.get(
                 url=storage_api_url,
                 headers=self._header,
-            ) as response:
-                data = await response.json()
+            ) as response,
+        ):
+            data = await response.json()
 
         return data["checksums"]["sha256"]
 
@@ -441,7 +442,7 @@ class RemotePath(PurePath):
     async def search_property(
         self,
         property: dict,
-        repository: list = [],
+        repository: list | None = None,
     ) -> AsyncGenerator[str, None]:
         """Search Property
 

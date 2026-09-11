@@ -42,8 +42,8 @@ class TestRemotePath:
             ssl=True,
         )
 
-        test_logger.debug(f"Remote Path __str__: {str(remote_path)}")
-        test_logger.debug(f"Remote Path __repr__: {repr(remote_path)}")
+        test_logger.debug(f"Remote Path __str__: {remote_path!s}")
+        test_logger.debug(f"Remote Path __repr__: {remote_path!r}")
 
         assert isinstance(remote_path, PurePath)
 

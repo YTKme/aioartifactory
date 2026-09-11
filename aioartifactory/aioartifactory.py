@@ -8,7 +8,6 @@ from asyncio import BoundedSemaphore, Queue, TaskGroup
 from collections.abc import AsyncGenerator, Sequence
 from pathlib import Path
 from types import TracebackType
-from typing import Optional, Type
 
 # from urllib.parse import (urlparse)
 import aiofiles
@@ -315,7 +314,7 @@ class AIOArtifactory:
             # Upload the file
             logger.debug(f"Uploading: {upload_path}")
 
-            with open(local_path, "rb") as file:
+            async with aiofiles.open(local_path, "rb") as file:
                 for destination in destination_list:
                     logger.debug(f"Destination: {destination}")
 
@@ -815,7 +814,7 @@ class AIOArtifactory:
         self,
         source: str,
         property: dict,
-        repository: list = [],
+        repository: list | None = None,
     ) -> AsyncGenerator[str, None]:
         """Search Property
 
@@ -869,9 +868,9 @@ class AIOArtifactory:
 
     async def __aexit__(
         self,
-        exception_type: Optional[Type[BaseException]],
-        exception_value: Optional[BaseException],
-        exception_traceback: Optional[TracebackType],
+        exception_type: type[BaseException] | None,
+        exception_value: BaseException | None,
+        exception_traceback: TracebackType | None,
     ) -> None:
         """Asynchronous Exit
 

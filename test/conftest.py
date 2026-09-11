@@ -304,9 +304,7 @@ def pytest_generate_tests(metafunc: Metafunc):
             # id_list = []
             indirect = False
 
-            strategy = (
-                function_data["strategy"] if "strategy" in function_data else "auto"
-            )
+            strategy = function_data.get("strategy", "auto")
             # conftest_logger.debug(f"Strategy: {strategy}")
 
             match strategy:
@@ -379,13 +377,11 @@ def pytest_generate_tests(metafunc: Metafunc):
 @pytest.fixture(scope="function")
 def function_logger():
     """Function Logger"""
-    pass
 
 
 @pytest.fixture(scope="class")
 def class_logger():
     """Class Logger"""
-    pass
 
 
 def setup_test_file():
