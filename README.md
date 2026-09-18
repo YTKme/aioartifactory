@@ -99,6 +99,27 @@ folder/
     └── file.ext
 ```
 
+## Test
+
+```bash
+pytest
+```
+
+The test session create a test data directory, `_test`, with a seed
+tree for the deploy (upload) test(s), `_test/aioartifactory`, and for
+the local path test(s), `_test/localpath`. The session remove the whole
+`_test` directory when it end, so every run start from the same layout.
+
+The retrieve (download) test(s) write into `_test/retrieve`, which is
+outside of the seed tree, and each download is remove after the test.
+Keep the `destination` of a retrieve test inside of `_test/retrieve`,
+see `test/test_aioartifactory.example.json`, otherwise a download can
+become the source of a later deploy, and nest the seed tree.
+
+Copy `test/test_aioartifactory.example.json` to
+`test/test_aioartifactory.json`, and update it with a real Artifactory
+host, to run the `real` test(s).
+
 ## Glossary
 
 ### Local Path
