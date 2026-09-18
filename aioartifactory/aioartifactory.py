@@ -361,7 +361,7 @@ class AIOArtifactory:
         recursive: bool = False,
         output_repository: bool = False,
         quiet: bool = False,
-    ) -> list[str]:
+    ) -> list[LocalPath]:
         """Retrieve
 
         :param source: The source (Remote) path(s)
@@ -378,7 +378,7 @@ class AIOArtifactory:
         :type quiet: bool, optional
 
         :return: The list of retrieved artifact(s)
-        :rtype: list[str]
+        :rtype: list[LocalPath]
         """
 
         # Create a `download_queue`
@@ -421,7 +421,7 @@ class AIOArtifactory:
         recursive: bool,
         output_repository: bool,
         quiet: bool,
-    ) -> list[str]:
+    ) -> list[LocalPath]:
         """Retrieve"""
         # Create a `source_queue` to store the `source_list` to retrieve
         source_queue = Queue()
@@ -459,7 +459,7 @@ class AIOArtifactory:
             for _ in range(connection_count):
                 await source_queue.put(None)
 
-        download_list = []
+        download_list: list[LocalPath] = []
 
         # Download
         async with TaskGroup() as group:
@@ -536,7 +536,7 @@ class AIOArtifactory:
         self,
         destination_list: Sequence[str | LocalPath],
         download_queue: Queue,
-        download_list: list[str],
+        download_list: list[LocalPath],
         session: ClientSession,
         output_repository: bool,
     ) -> None:
@@ -547,7 +547,7 @@ class AIOArtifactory:
         :param download_queue: The download queue
         :type download_queue: Queue
         :param download_list: The download list store what is downloaded
-        :type download_list: list[str]
+        :type download_list: list[LocalPath]
         :param session: The current session
         :type session: ClientSession
         :param output_repository: Whether to include the repository name
@@ -595,7 +595,7 @@ class AIOArtifactory:
                         async for chunk, _ in response.content.iter_chunks():
                             await file.write(chunk)
 
-                    download_list.append(str(destination_path))
+                    download_list.append(LocalPath(destination_path))
 
             # logger.info(f"Completed: {destination_path}")
 
