@@ -245,6 +245,7 @@ class TestAIOArtifactory:
         )
 
         for download in download_list:
+            assert isinstance(download, LocalPath)
             assert Path(download).exists()
 
     @pytest.mark.real
@@ -274,6 +275,7 @@ class TestAIOArtifactory:
         )
 
         for download in download_list:
+            assert isinstance(download, LocalPath)
             assert Path(download).exists()
 
     @pytest.mark.real
@@ -304,6 +306,7 @@ class TestAIOArtifactory:
         logger.debug(f"Download List: {download_list}")
 
         for download in download_list:
+            assert isinstance(download, LocalPath)
             assert Path(download).exists()
 
     @pytest.mark.real
@@ -320,11 +323,15 @@ class TestAIOArtifactory:
 
         aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
-        await aioartifactory.retrieve(
+        download_list = await aioartifactory.retrieve(
             source=source,
             destination=destination,
             recursive=True,
         )
+
+        for download in download_list:
+            assert isinstance(download, LocalPath)
+            assert Path(download).exists()
 
     @pytest.mark.real
     @pytest.mark.asyncio
