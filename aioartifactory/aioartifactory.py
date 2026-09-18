@@ -5,7 +5,8 @@ Asynchronous Input Output (AIO) Artifactory
 
 import os
 from asyncio import BoundedSemaphore, Queue, TaskGroup
-from collections.abc import AsyncGenerator, Sequence
+from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
+from functools import partial
 from pathlib import Path
 from types import TracebackType
 
@@ -79,6 +80,113 @@ class AIOArtifactory:
         self._client_session = None
 
     # ------
+    # Helper
+    # ------
+
+    def _create_client_session(self) -> ClientSession:
+        """Create Client Session
+
+        Create a `ClientSession` configured with the default connection
+        limit, the default connection timeout, and the Secure Sockets
+        Layer (SSL) certification check of the instance.
+
+        :return: The client session
+        :rtype: ClientSession
+        """
+
+        return ClientSession(
+            connector=TCPConnector(
+                limit_per_host=DEFAULT_MAXIMUM_CONNECTION,
+                ssl=self._ssl,
+            ),
+            timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
+        )
+
+    def _acquire_client_session(self) -> ClientSession:
+        """Acquire Client Session
+
+        Reuse the client session of the instance, when available,
+        otherwise create a new one.
+
+        :return: The client session
+        :rtype: ClientSession
+        """
+
+        if self._client_session:
+            return self._client_session
+
+        return self._create_client_session()
+
+    @staticmethod
+    def _as_path_sequence(
+        path: str | LocalPath | RemotePath | Sequence,
+        path_type: type[LocalPath] | type[RemotePath],
+    ) -> Sequence:
+        """As Path Sequence
+
+        Wrap a single path into a one item sequence, a sequence of
+        path(s) pass through unchanged.
+
+        :param path: The path(s)
+        :type path: str | LocalPath | RemotePath | Sequence
+        :param path_type: The path type of a single path
+        :type path_type: type[LocalPath] | type[RemotePath]
+
+        :return: The sequence of path(s)
+        :rtype: Sequence
+        """
+
+        if isinstance(path, (str, path_type)):
+            return [path]
+
+        return path
+
+    async def _run_worker(
+        self,
+        queue: Queue,
+        worker: Callable[[], Awaitable[None]],
+        work_item_list: Sequence | None = None,
+    ) -> None:
+        """Run Worker
+
+        Run a group of worker task(s) consuming the `queue`. The worker
+        count is the number of work item(s), or the current size of the
+        `queue` when there is no `work_item_list`, capped by the default
+        maximum connection.
+
+        Enqueue the `work_item_list`, when available, then enqueue a
+        `None` signal for each worker to exit.
+
+        :param queue: The queue the worker(s) consume
+        :type queue: Queue
+        :param worker: The (no argument) worker callable to create the
+            worker task(s) with
+        :type worker: Callable[[], Awaitable[None]]
+        :param work_item_list: The work item(s) to enqueue, defaults to
+            None for an already populated `queue`
+        :type work_item_list: Sequence, optional
+        """
+
+        # Optimize maximum connection
+        worker_count = min(
+            len(work_item_list) if work_item_list is not None else queue.qsize(),
+            DEFAULT_MAXIMUM_CONNECTION,
+        )
+
+        async with TaskGroup() as group:
+            # Create `worker_count` of worker task(s)
+            for _ in range(worker_count):
+                group.create_task(worker())
+
+            # Enqueue the work item(s) to the `queue`
+            for work_item in work_item_list or []:
+                await queue.put(work_item)
+
+            # Enqueue a `None` signal for worker(s) to exit
+            for _ in range(worker_count):
+                await queue.put(None)
+
+    # ------
     # Deploy
     # ------
 
@@ -117,23 +225,10 @@ class AIOArtifactory:
         upload_queue = Queue()
 
         # TODO: Convert one to many...for now
-        if isinstance(source, (str, LocalPath)):
-            source = [source]
-        if isinstance(destination, (str, RemotePath)):
-            destination = [destination]
+        source = self._as_path_sequence(source, LocalPath)
+        destination = self._as_path_sequence(destination, RemotePath)
 
-        if self._client_session:
-            client_session = self._client_session
-        else:
-            client_session = ClientSession(
-                connector=TCPConnector(
-                    limit_per_host=DEFAULT_MAXIMUM_CONNECTION,
-                    ssl=self._ssl,
-                ),
-                timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
-            )
-
-        async with client_session as session:
+        async with self._acquire_client_session() as session:
             return await self._deploy(
                 source_list=source,
                 destination_list=destination,
@@ -161,61 +256,33 @@ class AIOArtifactory:
         # destination_queue = Queue()
 
         # Deploy
-        async with TaskGroup() as group:
-            # Optimize maximum connection
-            # TODO: This need to be fixed...incorrect upload size?
-            connection_count = min(len(source_list), DEFAULT_MAXIMUM_CONNECTION)
-
-            # Create `connection_count` of `_deploy_query` worker task(s)
-            # Store them in a `task_list`
-
-            _ = [
-                group.create_task(
-                    self._deploy_task(
-                        source_queue=source_queue,
-                        upload_queue=upload_queue,
-                        recursive=recursive,
-                        # session=session,
-                    )
-                )
-                for _ in range(connection_count)
-            ]
-
-            # Enqueue the `source` to the `source_queue`
-            for source in source_list:
-                await source_queue.put(source)
-
-            # Enqueue the `destination` to the `destination_queue`
-            # for destination in destination_list:
-            #     await destination_queue.put(destination)
-
-            # Enqueue a `None` signal for worker(s) to exit
-            for _ in range(connection_count):
-                await source_queue.put(None)
+        # TODO: This need to be fixed...incorrect upload size?
+        await self._run_worker(
+            queue=source_queue,
+            worker=partial(
+                self._deploy_task,
+                source_queue=source_queue,
+                upload_queue=upload_queue,
+                recursive=recursive,
+                # session=session,
+            ),
+            work_item_list=source_list,
+        )
 
         upload_list = []
 
         # Upload
-        async with TaskGroup() as group:
-            # Optimize maximum connection
-            connection_count = min(upload_queue.qsize(), DEFAULT_MAXIMUM_CONNECTION)
-
-            # Create `connection_count` of `_upload_query` worker task(s)
-            # Store them in a `task_list`
-            for count in range(connection_count):
-                group.create_task(
-                    self._upload_task(
-                        destination_list=destination_list,
-                        property_dictionary=property_dictionary,
-                        upload_queue=upload_queue,
-                        upload_list=upload_list,
-                        session=session,
-                    )
-                )
-
-            # Enqueue a `None` signal for worker(s) to exit
-            for _ in range(connection_count):
-                await upload_queue.put(None)
+        await self._run_worker(
+            queue=upload_queue,
+            worker=partial(
+                self._upload_task,
+                destination_list=destination_list,
+                property_dictionary=property_dictionary,
+                upload_queue=upload_queue,
+                upload_list=upload_list,
+                session=session,
+            ),
+        )
 
         # logger.debug(f"Upload List: {upload_list}")
         return upload_list
@@ -385,23 +452,10 @@ class AIOArtifactory:
         download_queue = Queue()
 
         # TODO: Convert one to many...for now
-        if isinstance(source, (str, RemotePath)):
-            source = [source]
-        if isinstance(destination, (str, LocalPath)):
-            destination = [destination]
+        source = self._as_path_sequence(source, RemotePath)
+        destination = self._as_path_sequence(destination, LocalPath)
 
-        if self._client_session:
-            client_session = self._client_session
-        else:
-            client_session = ClientSession(
-                connector=TCPConnector(
-                    limit_per_host=DEFAULT_MAXIMUM_CONNECTION,
-                    ssl=self._ssl,
-                ),
-                timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
-            )
-
-        async with client_session as session:
+        async with self._acquire_client_session() as session:
             return await self._retrieve(
                 source_list=source,
                 destination_list=destination,
@@ -429,59 +483,32 @@ class AIOArtifactory:
         # destination_queue = Queue()
 
         # Retrieve
-        async with TaskGroup() as group:
-            # Optimize maximum connection
-            connection_count = min(len(source_list), DEFAULT_MAXIMUM_CONNECTION)
-
-            # Create `connection_count` of `_retrieve_query` worker task(s)
-            # Store them in a `task_list`
-            _ = [
-                group.create_task(
-                    self._retrieve_task(
-                        source_queue=source_queue,
-                        download_queue=download_queue,
-                        recursive=recursive,
-                        # session=session,
-                    )
-                )
-                for _ in range(connection_count)
-            ]
-
-            # Enqueue the `source` to the `source_queue`
-            for source in source_list:
-                await source_queue.put(source)
-
-            # Enqueue the `destination` to the `destination_queue`
-            # for destination in destination_list:
-            #     await destination_queue.put(destination)
-
-            # Enqueue a `None` signal for worker(s) to exit
-            for _ in range(connection_count):
-                await source_queue.put(None)
+        await self._run_worker(
+            queue=source_queue,
+            worker=partial(
+                self._retrieve_task,
+                source_queue=source_queue,
+                download_queue=download_queue,
+                recursive=recursive,
+                # session=session,
+            ),
+            work_item_list=source_list,
+        )
 
         download_list = []
 
         # Download
-        async with TaskGroup() as group:
-            # Optimize maximum connection
-            connection_count = min(download_queue.qsize(), DEFAULT_MAXIMUM_CONNECTION)
-
-            # Create `connection_count` of `_download_query` worker task(s)
-            # Store them in a `task_list`
-            for count in range(connection_count):
-                group.create_task(
-                    self._download_task(
-                        destination_list=destination_list,
-                        download_queue=download_queue,
-                        download_list=download_list,
-                        session=session,
-                        output_repository=output_repository,
-                    )
-                )
-
-            # Enqueue a `None` signal for worker(s) to exit
-            for _ in range(connection_count):
-                await download_queue.put(None)
+        await self._run_worker(
+            queue=download_queue,
+            worker=partial(
+                self._download_task,
+                destination_list=destination_list,
+                download_queue=download_queue,
+                download_list=download_list,
+                session=session,
+                output_repository=output_repository,
+            ),
+        )
 
         # logger.debug(f"Download List: {download_list}")
         return download_list
@@ -619,21 +646,9 @@ class AIOArtifactory:
         :type recursive: bool, optional
         """
 
-        if isinstance(source, (str, RemotePath)):
-            source = [source]
+        source = self._as_path_sequence(source, RemotePath)
 
-        if self._client_session:
-            client_session = self._client_session
-        else:
-            client_session = ClientSession(
-                connector=TCPConnector(
-                    limit_per_host=DEFAULT_MAXIMUM_CONNECTION,
-                    ssl=self._ssl,
-                ),
-                timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
-            )
-
-        async with client_session as session:
+        async with self._acquire_client_session() as session:
             return await self._delete(
                 source_list=source,
                 session=session,
@@ -663,54 +678,30 @@ class AIOArtifactory:
         query_queue = Queue()
 
         # Query
-        async with TaskGroup() as group:
-            # Optimize maximum connection
-            connection_count = min(len(source_list), DEFAULT_MAXIMUM_CONNECTION)
-
-            # Create `connection_count` of `_delete_task` worker task(s)
-            # Store them in a `task_list`
-
-            _ = [
-                group.create_task(
-                    self._query_remote_task(
-                        source_queue=source_queue,
-                        query_queue=query_queue,
-                        recursive=recursive,
-                    )
-                )
-                for _ in range(connection_count)
-            ]
-
-            # Enqueue the `source` to the `source_queue`
-            for source in source_list:
-                await source_queue.put(source)
-
-            # Enqueue a `None` signal for worker(s) to exit
-            for _ in range(connection_count):
-                await source_queue.put(None)
+        await self._run_worker(
+            queue=source_queue,
+            worker=partial(
+                self._query_remote_task,
+                source_queue=source_queue,
+                query_queue=query_queue,
+                recursive=recursive,
+            ),
+            work_item_list=source_list,
+        )
 
         # Initialize a `delete_list` to store individual artifact files deleted
         delete_list = []
 
         # Delete
-        async with TaskGroup() as group:
-            # Optimize maximum connection
-            connection_count = min(query_queue.qsize(), DEFAULT_MAXIMUM_CONNECTION)
-
-            # Create `connection_count` of `_delete_task` worker task(s)
-            # Store them in a `task_list`
-            for count in range(connection_count):
-                group.create_task(
-                    self._delete_task(
-                        source_queue=query_queue,
-                        delete_list=delete_list,
-                        session=session,
-                    )
-                )
-
-            # Enqueue a `None` signal for worker(s) to exit
-            for _ in range(connection_count):
-                await query_queue.put(None)
+        await self._run_worker(
+            queue=query_queue,
+            worker=partial(
+                self._delete_task,
+                source_queue=query_queue,
+                delete_list=delete_list,
+                session=session,
+            ),
+        )
 
         return delete_list
 
@@ -859,10 +850,7 @@ class AIOArtifactory:
     async def __aenter__(self):
         """Asynchronous Enter"""
         # Client Session
-        self._client_session = ClientSession(
-            connector=TCPConnector(limit_per_host=DEFAULT_MAXIMUM_CONNECTION),
-            timeout=ClientTimeout(total=DEFAULT_CONNECTION_TIMEOUT),
-        )
+        self._client_session = self._create_client_session()
 
         return self
 
