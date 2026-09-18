@@ -223,6 +223,7 @@ class TestAIOArtifactory:
         self,
         source: str | RemotePath,
         destination: str | LocalPath,
+        retrieve_cleanup: list,
     ):
         """Test Retrieve One Source Simple
 
@@ -232,6 +233,9 @@ class TestAIOArtifactory:
         :type source: str
         :param destination: The destination (Local) path(s)
         :type destination: PathLike
+        :param retrieve_cleanup: The retrieve (download) path(s) to
+            remove after the test
+        :type retrieve_cleanup: list
         """
 
         logger.debug(f"Source: {source}")
@@ -243,6 +247,7 @@ class TestAIOArtifactory:
             source=source,
             destination=destination,
         )
+        retrieve_cleanup.extend(download_list)
 
         for download in download_list:
             assert Path(download).exists()
@@ -253,6 +258,7 @@ class TestAIOArtifactory:
         self,
         source: str | RemotePath,
         destination: str | LocalPath,
+        retrieve_cleanup: list,
     ):
         """Test Retrieve One Source Recursive
 
@@ -260,6 +266,9 @@ class TestAIOArtifactory:
         :type source: str
         :param destination: The destination (Local) path(s)
         :type destination: PathLike
+        :param retrieve_cleanup: The retrieve (download) path(s) to
+            remove after the test
+        :type retrieve_cleanup: list
         """
 
         logger.debug(f"Source: {source}")
@@ -272,6 +281,7 @@ class TestAIOArtifactory:
             destination=destination,
             recursive=True,
         )
+        retrieve_cleanup.extend(download_list)
 
         for download in download_list:
             assert Path(download).exists()
@@ -282,6 +292,7 @@ class TestAIOArtifactory:
         self,
         source: str | RemotePath,
         destination: str | LocalPath,
+        retrieve_cleanup: list,
     ):
         """Test Retrieve One Artifact
 
@@ -289,6 +300,9 @@ class TestAIOArtifactory:
         :type source: str
         :param destination: The destination (Local) path(s)
         :type destination: PathLike
+        :param retrieve_cleanup: The retrieve (download) path(s) to
+            remove after the test
+        :type retrieve_cleanup: list
         """
 
         logger.debug(f"Source: {source}")
@@ -300,6 +314,7 @@ class TestAIOArtifactory:
             source=source,
             destination=destination,
         )
+        retrieve_cleanup.extend(download_list)
 
         logger.debug(f"Download List: {download_list}")
 
@@ -312,19 +327,33 @@ class TestAIOArtifactory:
         self,
         source: list[str | RemotePath],
         destination: list[str | LocalPath],
+        retrieve_cleanup: list,
     ):
-        """Test Retrieve Many Artifact"""
+        """Test Retrieve Many Artifact
+
+        :param source: The source (Remote) path(s)
+        :type source: list[str | RemotePath]
+        :param destination: The destination (Local) path(s)
+        :type destination: list[str | LocalPath]
+        :param retrieve_cleanup: The retrieve (download) path(s) to
+            remove after the test
+        :type retrieve_cleanup: list
+        """
 
         logger.debug(f"Source: {source}")
         logger.debug(f"Destination: {destination}")
 
         aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
 
-        await aioartifactory.retrieve(
+        download_list = await aioartifactory.retrieve(
             source=source,
             destination=destination,
             recursive=True,
         )
+        retrieve_cleanup.extend(download_list)
+
+        for download in download_list:
+            assert Path(download).exists()
 
     @pytest.mark.real
     @pytest.mark.asyncio

@@ -1,0 +1,126 @@
+{
+    "test_aioartifactory": {
+        "TestAIOArtifactory": {
+            "test_deploy_one_source_simple": {
+                "strategy": "auto",
+                "data": {
+                    "source": [
+                        "./_test/aioartifactory/"
+                    ],
+                    "destination": [
+                        "https://artifactory.acme.com/artifactory/repository/path/simple"
+                    ]
+                }
+            },
+            "test_deploy_one_source_recursive": {
+                "strategy": "auto",
+                "data": {
+                    "source": [
+                        "./_test/aioartifactory/"
+                    ],
+                    "destination": [
+                        "https://artifactory.acme.com/artifactory/repository/path/recursive"
+                    ]
+                }
+            },
+            "test_deploy_one_artifact": {
+                "strategy": "auto",
+                "data": {
+                    "source": [
+                        "./_test/aioartifactory/alpha.txt"
+                    ],
+                    "destination": [
+                        "https://artifactory.acme.com/artifactory/repository/path/artifact"
+                    ]
+                }
+            },
+            "test_deploy_one_artifact_property": {
+                "strategy": "auto",
+                "data": {
+                    "source": [
+                        "./_test/aioartifactory/alpha.txt"
+                    ],
+                    "destination": [
+                        "https://artifactory.acme.com/artifactory/repository/path/property"
+                    ],
+                    "property": [
+                        {
+                            "key": "value"
+                        }
+                    ]
+                }
+            },
+            "test_retrieve_one_source_simple": {
+                "strategy": "auto",
+                "data": {
+                    "source": [
+                        "https://artifactory.acme.com/artifactory/repository/path/simple"
+                    ],
+                    "destination": [
+                        "./_test/retrieve/simple"
+                    ]
+                }
+            },
+            "test_retrieve_one_source_recursive": {
+                "strategy": "auto",
+                "data": {
+                    "source": [
+                        "https://artifactory.acme.com/artifactory/repository/path/recursive"
+                    ],
+                    "destination": [
+                        "./_test/retrieve/recursive"
+                    ]
+                }
+            },
+            "test_retrieve_one_artifact": {
+                "strategy": "auto",
+                "data": {
+                    "source": [
+                        "https://artifactory.acme.com/artifactory/repository/path/artifact/alpha.txt"
+                    ],
+                    "destination": [
+                        "./_test/retrieve/artifact"
+                    ]
+                }
+            },
+            "test_retrieve_many_artifact": {
+                "strategy": "auto",
+                "data": {
+                    "source": [
+                        [
+                            "https://artifactory.acme.com/artifactory/repository/path/artifact/alpha.txt",
+                            "https://artifactory.acme.com/artifactory/repository/path/artifact/beta.txt"
+                        ]
+                    ],
+                    "destination": [
+                        [
+                            "./_test/retrieve/many"
+                        ]
+                    ]
+                }
+            },
+            "test_delete_one_source_simple": {
+                "strategy": "auto",
+                "data": {
+                    "source": [
+                        "./_test/aioartifactory/"
+                    ],
+                    "destination": [
+                        "https://artifactory.acme.com/artifactory/repository/path/delete"
+                    ]
+                }
+            },
+            "test_delete_one_artifact": {
+                "strategy": "auto",
+                "data": {
+                    "source": [
+                        "./_test/aioartifactory/alpha.txt"
+                    ],
+                    "destination": [
+                        "https://artifactory.acme.com/artifactory/repository/path/delete"
+                    ]
+                }
+            }
+        }
+    }
+}

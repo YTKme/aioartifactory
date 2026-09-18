@@ -9,6 +9,7 @@ This module implement test configuration for Asynchronous Input Output
 import json
 import platform
 import shutil
+from collections.abc import Generator
 from itertools import product
 from pathlib import Path
 
@@ -19,6 +20,11 @@ from pytest import Config, ExitCode, Metafunc, Parser, PytestPluginManager, Sess
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
 CURRENT_WORKING_DIRECTORY = Path().cwd()
 TEST_DATA_DIRECTORY = CURRENT_WORKING_DIRECTORY / "_test"
+
+# The (Local) destination directory for retrieve (download) test(s). It is
+# deliberately outside of the seed tree, so a download can never become the
+# source of a later deploy (upload), which nest the seed tree.
+TEST_RETRIEVE_DIRECTORY = TEST_DATA_DIRECTORY / "retrieve"
 
 TEST_FILE_LIST = [
     "aioartifactory/alpha.txt",
@@ -95,16 +101,16 @@ def pytest_unconfigure(config: Config):
     logger.debug(f"Config: {config}")
 
     # Remove the test file data
-    # teardown_test_file()
+    teardown_test_file()
 
     # Remove the test data directory
-    # conftest_logger.debug(f"Remove Test Data Directory: {TEST_DATA_DIRECTORY}")
-    # if TEST_DATA_DIRECTORY.exists():
-    #     try:
-    #         shutil.rmtree(TEST_DATA_DIRECTORY)
-    #     except OSError as e:
-    #         conftest_logger.error(f"Operating System Error: {e}")
-    # conftest_logger.debug(f"Remove Test Data Directory Success")
+    logger.debug(f"Remove Test Data Directory: {TEST_DATA_DIRECTORY}")
+    if TEST_DATA_DIRECTORY.exists():
+        try:
+            shutil.rmtree(TEST_DATA_DIRECTORY, ignore_errors=True)
+        except OSError as e:
+            logger.error(f"Operating System Error: {e}")
+    logger.debug("Remove Test Data Directory Success")
 
 
 def pytest_sessionstart(session: Session) -> None:
@@ -384,15 +390,55 @@ def class_logger():
     """Class Logger"""
 
 
+@pytest.fixture(scope="function")
+def retrieve_directory() -> Path:
+    """Retrieve Directory
+
+    The (Local) destination directory for retrieve (download) test(s).
+
+    :return: The retrieve (download) directory
+    :rtype: pathlib.Path
+    """
+    TEST_RETRIEVE_DIRECTORY.mkdir(parents=True, exist_ok=True)
+
+    return TEST_RETRIEVE_DIRECTORY
+
+
+@pytest.fixture(scope="function")
+def retrieve_cleanup(retrieve_directory: Path) -> Generator[list, None, None]:
+    """Retrieve Cleanup
+
+    Track the retrieve (download) path(s) of a test, and remove each one
+    of them, along with any empty parent directory, after the test. It
+    keep a test run from reusing the artifact of a previous test run.
+
+    :param retrieve_directory: The retrieve (download) directory
+    :type retrieve_directory: pathlib.Path
+    :return: The (mutable) list to track the retrieve (download) path(s)
+    :rtype: Generator[list, None, None]
+    """
+    download_list = []
+
+    yield download_list
+
+    remove_download(download_list=download_list, directory=retrieve_directory)
+
+
 def setup_test_file():
-    """Setup Test File"""
-    logger.info("Setup Local Path")
+    """Setup Test File
+
+    Create the seed (test data) file(s), along with an empty retrieve
+    (download) directory. The layout is identical for every test run.
+    """
+    logger.info("Setup Test File")
 
     try:
+        TEST_RETRIEVE_DIRECTORY.mkdir(parents=True, exist_ok=True)
+
         for test_file in TEST_FILE_LIST:
             file_path = TEST_DATA_DIRECTORY / test_file
             logger.debug(f"Create File: {file_path}")
-            if file_path.is_dir():
+            if test_file.endswith("/"):
                 file_path.mkdir(parents=True, exist_ok=True)
             else:
                 file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -402,8 +448,12 @@ def setup_test_file():
 
 
 def teardown_test_file():
-    """Teardown Test File"""
-    logger.info("Teardown Local Path")
+    """Teardown Test File
+
+    Remove the seed (test data) file(s), along with any empty parent
+    directory, up to (but not include) the test data directory.
+    """
+    logger.info("Teardown Test File")
 
     try:
         for test_file in TEST_FILE_LIST:
@@ -412,16 +462,76 @@ def teardown_test_file():
             if file_path.is_dir():
                 shutil.rmtree(file_path, ignore_errors=True)
             else:
-                file_path.unlink()
+                file_path.unlink(missing_ok=True)
 
-        parent_path = set()
-        for test_file in TEST_FILE_LIST:
-            directory_path = (TEST_DATA_DIRECTORY / test_file).parent
-            parent_path.add(directory_path)
-
-        for path in parent_path:
-            logger.debug(f"Remove Directory: {path}")
-            shutil.rmtree(path, ignore_errors=True)
+            prune_directory(directory=file_path.parent)
 
     except OSError as e:
         logger.error(f"Operating System Error: {e}")
+
+
+def remove_download(
+    download_list: list,
+    directory: Path = TEST_RETRIEVE_DIRECTORY,
+):
+    """Remove Download
+
+    Remove each retrieve (download) path, along with any empty parent
+    directory, up to (but not include) the retrieve (download)
+    directory. A path outside of the retrieve (download) directory, a
+    seed (test data) file for example, is never remove.
+
+    :param download_list: The list of retrieve (download) path(s)
+    :type download_list: list
+    :param directory: The retrieve (download) directory
+    :type directory: pathlib.Path
+    """
+    logger.info("Remove Download")
+
+    directory = Path(directory).expanduser().resolve()
+
+    for download in download_list:
+        download_path = Path(download).expanduser().resolve()
+
+        if not download_path.is_relative_to(directory) or download_path == directory:
+            logger.warning(f"Skip Remove Download Outside Directory: {download_path}")
+            continue
+
+        logger.debug(f"Remove Download: {download_path}")
+        try:
+            if download_path.is_dir():
+                shutil.rmtree(download_path, ignore_errors=True)
+            else:
+                download_path.unlink(missing_ok=True)
+        except OSError as e:
+            logger.error(f"Operating System Error: {e}")
+
+        prune_directory(directory=download_path.parent, root=directory)
+
+
+def prune_directory(
+    directory: Path,
+    root: Path = TEST_DATA_DIRECTORY,
+):
+    """Prune Directory
+
+    Remove the directory, along with any empty parent directory, up to
+    (but not include) the root directory.
+
+    :param directory: The directory to prune
+    :type directory: pathlib.Path
+    :param root: The root directory to stop the prune
+    :type root: pathlib.Path
+    """
+    directory = Path(directory).expanduser().resolve()
+    root = Path(root).expanduser().resolve()
+
+    while directory != root and directory.is_relative_to(root):
+        try:
+            directory.rmdir()
+        except OSError:
+            # The directory is not empty, or it does not exist
+            break
+
+        logger.debug(f"Remove Directory: {directory}")
+        directory = directory.parent
