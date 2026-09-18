@@ -4,7 +4,7 @@ Test Asynchronous Input Output (AIO) Artifactory
 """
 
 import os
-from asyncio import TaskGroup
+from asyncio import Queue, TaskGroup
 from pathlib import Path
 
 import pytest
@@ -12,6 +12,7 @@ import tealogger
 from pytest_mock import MockerFixture
 
 from aioartifactory import AIOArtifactory, LocalPath, RemotePath
+from aioartifactory.configuration import DEFAULT_MAXIMUM_CONNECTION
 
 ARTIFACTORY_API_KEY = os.environ.get("ARTIFACTORY_API_KEY")
 CURRENT_MODULE_PATH = Path(__file__).parent.expanduser().resolve()
@@ -459,6 +460,193 @@ class TestAIOArtifactory:
         # Assert
         mock_delete.assert_called_once_with(source=delete_source)
         assert delete_source in list(mock_delete.return_value)
+
+    @pytest.mark.mock
+    @pytest.mark.parametrize(
+        "path, path_type",
+        [
+            ("./_test/aioartifactory/alpha.txt", LocalPath),
+            (LocalPath("./_test/aioartifactory/alpha.txt"), LocalPath),
+            ("https://example.com/artifactory/repository/alpha.txt", RemotePath),
+            (
+                RemotePath("https://example.com/artifactory/repository/alpha.txt"),
+                RemotePath,
+            ),
+        ],
+    )
+    def test_as_path_sequence_one_path_mock(
+        self,
+        path: str | LocalPath | RemotePath,
+        path_type: type[LocalPath] | type[RemotePath],
+    ):
+        """Test As Path Sequence One Path Mock
+
+        Test one path become a one item sequence.
+
+        :param path: The (single) path
+        :type path: str | LocalPath | RemotePath
+        :param path_type: The path type of a single path
+        :type path_type: type[LocalPath] | type[RemotePath]
+        """
+
+        path_sequence = AIOArtifactory._as_path_sequence(path, path_type)
+
+        assert path_sequence == [path]
+
+    @pytest.mark.mock
+    def test_as_path_sequence_many_path_mock(self):
+        """Test As Path Sequence Many Path Mock
+
+        Test a sequence of path(s) pass through unchanged.
+        """
+
+        path_list = [
+            "https://example.com/artifactory/repository/alpha.txt",
+            "https://example.com/artifactory/repository/beta.txt",
+        ]
+
+        assert AIOArtifactory._as_path_sequence(path_list, RemotePath) is path_list
+
+    @pytest.mark.mock
+    @pytest.mark.asyncio
+    async def test_delete_client_session_reuse_mock(
+        self,
+        mocker: MockerFixture,
+    ):
+        """Test Delete Client Session Reuse Mock
+
+        Test the client session of the instance, when available, is
+        reuse instead of a new one being create.
+
+        :param mocker: The mocker fixture
+        :type mocker: MockerFixture
+        """
+
+        delete_source = "https://example.com/artifactory/repository/artifact.txt"
+
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+        client_session = aioartifactory._create_client_session()
+        aioartifactory._client_session = client_session
+
+        create_client_session = mocker.spy(aioartifactory, "_create_client_session")
+        mock_delete = mocker.patch.object(
+            AIOArtifactory,
+            "_delete",
+            return_value=[delete_source],
+        )
+
+        delete_list = await aioartifactory.delete(source=delete_source)
+
+        # Assert the client session of the instance is reuse
+        create_client_session.assert_not_called()
+        assert mock_delete.call_args.kwargs["session"] is client_session
+        # Assert the source (single) path become a one item sequence
+        assert mock_delete.call_args.kwargs["source_list"] == [delete_source]
+        assert delete_list == [delete_source]
+
+    @pytest.mark.mock
+    @pytest.mark.asyncio
+    async def test_delete_client_session_create_mock(
+        self,
+        mocker: MockerFixture,
+    ):
+        """Test Delete Client Session Create Mock
+
+        Test a new client session is create, then close, when the
+        instance does not have one.
+
+        :param mocker: The mocker fixture
+        :type mocker: MockerFixture
+        """
+
+        delete_source = "https://example.com/artifactory/repository/artifact.txt"
+
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+
+        create_client_session = mocker.spy(aioartifactory, "_create_client_session")
+        mock_delete = mocker.patch.object(
+            AIOArtifactory,
+            "_delete",
+            return_value=[delete_source],
+        )
+
+        delete_list = await aioartifactory.delete(source=delete_source)
+
+        # Assert a new client session is create, then close
+        create_client_session.assert_called_once()
+        session = mock_delete.call_args.kwargs["session"]
+        assert session is create_client_session.spy_return
+        assert session.closed
+        assert delete_list == [delete_source]
+
+    @pytest.mark.mock
+    @pytest.mark.asyncio
+    async def test_run_worker_work_item_list_mock(self):
+        """Test Run Worker Work Item List Mock
+
+        Test the worker helper run one worker per work item, capped by
+        the default maximum connection, and signal each worker to exit.
+        """
+
+        work_item_list = [f"artifact-{index}.txt" for index in range(3)]
+        queue = Queue()
+        worker_list = []
+        process_list = []
+
+        async def worker():
+            """Worker"""
+            worker_list.append(worker)
+            while True:
+                work_item = await queue.get()
+                if work_item is None:
+                    break
+                process_list.append(work_item)
+
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+        await aioartifactory._run_worker(
+            queue=queue,
+            worker=worker,
+            work_item_list=work_item_list,
+        )
+
+        # Assert one worker per work item, each receive a stop signal
+        assert len(worker_list) == min(len(work_item_list), DEFAULT_MAXIMUM_CONNECTION)
+        assert sorted(process_list) == sorted(work_item_list)
+        assert queue.empty()
+
+    @pytest.mark.mock
+    @pytest.mark.asyncio
+    async def test_run_worker_queue_size_mock(self):
+        """Test Run Worker Queue Size Mock
+
+        Test the worker helper run one worker per item already in the
+        queue, capped by the default maximum connection.
+        """
+
+        queue = Queue()
+        for index in range(DEFAULT_MAXIMUM_CONNECTION + 2):
+            queue.put_nowait(f"artifact-{index}.txt")
+        queue_size = queue.qsize()
+
+        worker_list = []
+        process_list = []
+
+        async def worker():
+            """Worker"""
+            worker_list.append(worker)
+            while True:
+                work_item = await queue.get()
+                if work_item is None:
+                    break
+                process_list.append(work_item)
+
+        aioartifactory = AIOArtifactory(api_key=ARTIFACTORY_API_KEY)
+        await aioartifactory._run_worker(queue=queue, worker=worker)
+
+        # Assert the worker count is cap by the default maximum connection
+        assert len(worker_list) == DEFAULT_MAXIMUM_CONNECTION
+        assert len(process_list) == queue_size
+        assert queue.empty()
 
 
 #     async def test_retrieve_destination(
